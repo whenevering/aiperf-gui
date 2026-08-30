@@ -1,0 +1,26 @@
+# Mirror these images into the intranet registry when the CI platform itself is
+# also deployed in the offline environment. Pin the versions to your internal
+# platform standard before mirroring; avoid using floating latest tags.
+
+# Included in this offline package as tar.gz files:
+nvcr.io/nvidia/ai-dynamo/aiperf:0.12.0
+aiperf-gui:0.1.0
+
+# Required by the supplied pipeline templates:
+docker:27-cli
+
+# Common Gitea Actions dependencies, if you run Gitea Actions:
+gitea/act_runner:<your-act-runner-version>
+node:20-bullseye
+actions/checkout:v4
+
+# Common Woodpecker CI dependencies, if you run Woodpecker:
+woodpeckerci/woodpecker-server:<your-woodpecker-version>
+woodpeckerci/woodpecker-agent:<your-woodpecker-version>
+
+# Common Drone CI dependencies, if you run Drone:
+drone/drone:<your-drone-version>
+drone/drone-runner-docker:<your-drone-runner-version>
+
+# Optional internal registry bootstrap image:
+registry:2

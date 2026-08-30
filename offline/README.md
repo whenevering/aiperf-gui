@@ -24,7 +24,8 @@ aiperf-gui-offline-migration-2026-08-30/
 │   ├── env.example
 │   ├── gitea-app.ini.example
 │   ├── act-runner-config.yaml.example
-│   └── docker-daemon.json.example
+│   ├── docker-daemon.json.example
+│   └── required-images.txt
 └── scripts/
     ├── import-gitea.sh
     ├── load-images.sh
@@ -42,6 +43,8 @@ aiperf-gui-offline-migration-2026-08-30/
 - 可选：如果内网 Registry 使用自签名证书，需要把 CA 证书加入 Docker 信任，或在测试环境配置 insecure registry。
 
 可以把 `config/env.example` 复制为 `config/env`，并在里面写入内网 Gitea、Registry、账号等地址；脚本会自动读取该文件。也可以不创建 `config/env`，直接在执行脚本前用 `export` 设置变量。
+
+如果内网流水线平台本身也需要离线部署，请按 `config/required-images.txt` 先把 Gitea Runner、Woodpecker、Drone、`docker:27-cli` 等基础运行镜像镜像到内网 Registry。本包已经包含 AIPerf 基础镜像和 AIPerf GUI 镜像。
 
 ## 迁移源码到 Gitea
 
