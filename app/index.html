@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AIPerf GUI</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: #f5f6f8;
+      color: #20242c;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #dfe3ea;
+      padding: 0;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 14px 28px;
+    }
+    h1 { margin: 0; font-size: 20px; line-height: 1.25; }
+    .language-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .language-switch label {
+      margin: 0;
+      white-space: nowrap;
+    }
+    .language-switch select {
+      width: auto;
+      min-width: 128px;
+    }
+    .help-button {
+      background: #e8edf5;
+      color: #223044;
+    }
+    main {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    section {
+      background: #ffffff;
+      border: 1px solid #dfe3ea;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    h2 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    label { display: block; font-size: 12px; font-weight: 700; margin: 0 0 5px; color: #405066; }
+    input, select {
+      width: 100%;
+      height: 36px;
+      border: 1px solid #c8d0dc;
+      border-radius: 6px;
+      padding: 7px 9px;
+      font: inherit;
+      background: #fff;
+      min-width: 0;
+    }
+    select:disabled {
+      background: #edf1f6;
+      color: #8590a3;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 6px;
+      background: #1f6feb;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      height: 36px;
+      padding: 0 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.secondary { background: #44546a; }
+    button.subtle { background: #e8edf5; color: #223044; }
+    button:disabled { opacity: .65; cursor: wait; }
+    .benchmark-form {
+      display: grid;
+      gap: 10px;
+    }
+    .benchmark-row {
+      display: grid;
+      gap: 10px;
+      align-items: start;
+    }
+    .row-connection {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .row-params {
+      grid-template-columns: minmax(360px, 2.3fr) repeat(7, minmax(82px, .65fr));
+    }
+    .row-actions {
+      grid-template-columns: auto minmax(340px, 1fr) auto minmax(220px, .62fr) minmax(220px, .62fr);
+      justify-content: end;
+    }
+    .model-tools {
+      display: grid;
+      grid-template-columns: minmax(170px, 1fr) 44px auto;
+      gap: 8px;
+      position: relative;
+    }
+    .model-picker {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      padding: 0;
+      background: #e8edf5;
+      color: #223044;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .model-picker:disabled {
+      background: #edf1f6;
+      color: #9aa5b5;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+    .model-select-wrap {
+      position: relative;
+    }
+    .model-menu {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      z-index: 20;
+      width: min(320px, 70vw);
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid #c8d0dc;
+      border-radius: 6px;
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(23, 32, 51, .16);
+      padding: 4px;
+    }
+    .model-option {
+      width: 100%;
+      height: auto;
+      min-height: 32px;
+      justify-content: flex-start;
+      border-radius: 4px;
+      background: transparent;
+      color: #20242c;
+      font-weight: 500;
+      text-align: left;
+      white-space: normal;
+      padding: 7px 9px;
+    }
+    .model-option:hover {
+      background: #e8f0fe;
+    }
+    .proxy-field,
+    .proxy-input-field {
+      justify-self: end;
+      width: 100%;
+    }
+    .proxy-field .check {
+      justify-content: center;
+      min-width: 74px;
+    }
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: end;
+    }
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 36px;
+      border: 1px solid #dfe3ea;
+      border-radius: 6px;
+      padding: 0 9px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2f3b4c;
+      background: #fff;
+    }
+    .check input { width: 16px; height: 16px; min-width: 16px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .note { color: #596579; font-size: 13px; line-height: 1.45; min-height: 18px; margin-top: 8px; }
+    .note.error { color: #b42318; font-weight: 700; }
+    .note.ok { color: #246b49; font-weight: 700; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: #e8f0fe;
+      color: #174ea6;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid #dfe3ea;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 88px;
+      background: #fbfcfe;
+    }
+    .metric b { display: block; font-size: 12px; color: #607089; }
+    .metric strong { display: block; margin-top: 5px; font-size: 22px; line-height: 1.15; color: #172033; }
+    .metric small { display: block; margin-top: 2px; color: #6b778c; }
+    .bar {
+      height: 7px;
+      border-radius: 999px;
+      background: #e5eaf2;
+      overflow: hidden;
+      margin-top: 9px;
+    }
+    .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w, 0%);
+      background: #2f7d58;
+    }
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .chart {
+      border: 1px solid #dfe3ea;
+      border-radius: 8px;
+      min-height: 230px;
+      padding: 10px;
+    }
+    .chart-title { display: flex; justify-content: space-between; gap: 10px; color: #405066; font-size: 12px; font-weight: 800; }
+    svg { width: 100%; height: 180px; display: block; margin-top: 8px; }
+    .axis { stroke: #c8d0dc; stroke-width: 1; }
+    .line-blue { fill: none; stroke: #1f6feb; stroke-width: 2.5; }
+    .line-green { fill: none; stroke: #2f7d58; stroke-width: 2.5; }
+    .point-blue { fill: #1f6feb; }
+    .point-green { fill: #2f7d58; }
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      color: #6b778c;
+      border: 1px dashed #c8d0dc;
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .log-panel {
+      margin: 10px 0 0;
+      background: #101418;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 250px;
+      max-height: 520px;
+      overflow: auto;
+    }
+    .help-panel[hidden] {
+      display: none !important;
+    }
+    .help-panel {
+      background: #ffffff;
+      border: 1px solid #dfe3ea;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .help-dialog {
+      width: 100%;
+    }
+    .help-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .help-header h2 {
+      margin: 0;
+    }
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .help-item {
+      border: 1px solid #dfe3ea;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+    .help-item strong {
+      display: block;
+      font-size: 13px;
+      color: #172033;
+      margin-bottom: 4px;
+    }
+    .help-item p {
+      margin: 0;
+      color: #405066;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .help-item small {
+      display: block;
+      margin-top: 6px;
+      color: #6b778c;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .boot-banner {
+      width: min(100%, 430px);
+      min-height: 185px;
+      margin: 0 0 12px;
+      border: 2px solid #00ffff;
+      background: #0000a8;
+      color: #ffffff;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.25;
+      box-shadow: inset 0 0 0 1px #002fd6;
+    }
+    .boot-banner-top {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-bottom: 1px solid #00ffff;
+      font-weight: 700;
+    }
+    .boot-banner-body {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      padding: 22px 14px 16px;
+      text-align: center;
+    }
+    .boot-banner-title {
+      font-size: 16px;
+      color: #ffffff;
+    }
+    .boot-banner-subtitle {
+      color: #00ffff;
+    }
+    .boot-banner-loading {
+      color: #ffff00;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .boot-banner-copy {
+      color: #00ffff;
+      margin-top: 10px;
+    }
+    .copyright-line {
+      color: #596579;
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: center;
+      margin-top: 10px;
+    }
+    pre {
+      margin: 0;
+      color: #d6deeb;
+      background: transparent;
+      padding: 0;
+      min-height: 0;
+      max-height: none;
+      overflow: visible;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 1180px) {
+      .row-connection { grid-template-columns: 1.4fr 1fr; }
+      .row-params { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .row-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .result-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .model-field { grid-column: span 4; }
+    }
+    @media (max-width: 760px) {
+      main { padding: 10px; }
+      .benchmark-row, .result-grid, .charts, .status-grid { grid-template-columns: 1fr; }
+      .model-field { grid-column: span 1; }
+      .model-tools { grid-template-columns: 1fr; }
+      .model-picker { width: 100%; }
+      .help-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1 id="appTitle">AIPerf GUI v0.12.0</h1>
+      <div class="language-switch">
+        <label for="languageSelect" data-i18n="language">语言</label>
+        <select id="languageSelect">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+          <option value="fr">Francais</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Espanol</option>
+        </select>
+        <button class="help-button" id="helpBtn" type="button" data-i18n="help">帮助</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2 data-i18n="benchmark">基准测试</h2>
+      <div class="benchmark-form">
+        <div class="benchmark-row row-connection">
+          <div>
+            <label for="baseUrl">Base URL</label>
+            <input id="baseUrl" value="https://apihub.agnes-ai.com/v1" />
+          </div>
+          <div>
+            <label for="apiKey">API Key</label>
+            <input id="apiKey" type="password" placeholder="可选" data-i18n-placeholder="optional" />
+          </div>
+        </div>
+
+        <div class="benchmark-row row-params">
+          <div class="model-field">
+            <label for="model" data-i18n="model">模型</label>
+            <div class="model-tools">
+              <input id="model" value="agnes-2.0-flash" list="modelList" />
+              <div class="model-select-wrap">
+                <button id="modelSelectBtn" class="model-picker" type="button" disabled title="选择模型" aria-label="选择模型" data-i18n-title="selectModel">▼</button>
+                <div id="modelMenu" class="model-menu" hidden></div>
+              </div>
+              <button class="subtle" id="fetchModelsBtn" type="button" data-i18n="fetchModels">获取模型</button>
+            </div>
+            <datalist id="modelList"></datalist>
+          </div>
+          <div>
+            <label for="endpoint" data-i18n="endpoint">端点</label>
+            <select id="endpoint">
+              <option value="chat">chat</option>
+              <option value="completions">completions</option>
+            </select>
+          </div>
+          <div>
+            <label for="concurrency" data-i18n="concurrency">并发</label>
+            <input id="concurrency" value="1,2,4,8" />
+          </div>
+          <div>
+            <label for="inputTokens" data-i18n="input">输入</label>
+            <input id="inputTokens" type="number" min="1" value="128" />
+          </div>
+          <div>
+            <label for="outputTokens" data-i18n="output">输出</label>
+            <input id="outputTokens" type="number" min="1" value="32" />
+          </div>
+          <div>
+            <label for="requestCount" data-i18n="requests">请求数</label>
+            <input id="requestCount" type="number" min="1" value="1" />
+          </div>
+          <div>
+            <label for="warmupCount" data-i18n="warmup">预热</label>
+            <input id="warmupCount" type="number" min="1" value="1" />
+          </div>
+          <div>
+            <label for="timeout" data-i18n="timeout">超时</label>
+            <input id="timeout" type="number" min="10" value="120" />
+          </div>
+        </div>
+
+        <div class="benchmark-row row-actions">
+          <div>
+            <label data-i18n="action">操作</label>
+            <div class="actions">
+              <button id="startBtn" type="button" data-i18n="start">开始</button>
+              <button class="secondary" id="infoBtn" type="button" data-i18n="checkAiperf">检查 AIPerf</button>
+            </div>
+          </div>
+          <div>
+            <label data-i18n="options">选项</label>
+            <div class="toggle-row">
+              <label class="check"><input id="streaming" type="checkbox" checked /> <span data-i18n="streaming">流式</span></label>
+              <label class="check"><input id="fixedOutput" type="checkbox" checked /> <span data-i18n="fixedOutput">固定输出</span></label>
+              <label class="check"><input id="serverTokenCount" type="checkbox" /> <span data-i18n="serverMetrics">服务端指标</span></label>
+            </div>
+          </div>
+          <div class="proxy-field">
+            <label data-i18n="proxy">代理</label>
+            <label class="check"><input id="proxyEnabled" type="checkbox" /> <span data-i18n="proxy">代理</span></label>
+          </div>
+          <div class="proxy-input-field">
+            <label for="proxyUrl" data-i18n="proxyUrl">代理地址</label>
+            <input id="proxyUrl" value="http://192.168.1.1:8080" />
+          </div>
+          <div class="proxy-input-field">
+            <label for="noProxy" data-i18n="noProxy">不走代理</label>
+            <input id="noProxy" value="127.0.0.1,localhost" />
+          </div>
+        </div>
+      </div>
+      <div class="note" id="infoText"></div>
+    </section>
+
+    <section>
+      <h2><span data-i18n="result">结果</span> <span class="status" id="resultState" data-status-value="idle">待命</span></h2>
+      <div id="resultEmpty" class="empty" data-i18n="noResult">暂无结果</div>
+      <div id="resultContent" hidden>
+        <div class="result-grid" id="resultMetrics"></div>
+        <div class="charts">
+          <div class="chart">
+            <div class="chart-title"><span data-i18n="latencyByConcurrency">延迟 / 并发</span><span>TTFT / E2E</span></div>
+            <svg id="latencyChart" viewBox="0 0 620 180" role="img"></svg>
+          </div>
+          <div class="chart">
+            <div class="chart-title"><span data-i18n="throughputByConcurrency">吞吐 / 并发</span><span>Output TPS / RPS</span></div>
+            <svg id="throughputChart" viewBox="0 0 620 180" role="img"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2><span data-i18n="runStatusTitle">运行状态</span> <span class="status" id="status" data-status-value="idle">待命</span></h2>
+      <div class="status-grid">
+        <div class="metric"><b>Run ID</b><strong id="runId">-</strong></div>
+        <div class="metric"><b data-i18n="statusLabel">状态</b><strong id="runStatus" data-status-value="">-</strong></div>
+        <div class="metric"><b>AIPerf</b><strong id="aiperfState">?</strong></div>
+        <div class="metric"><b data-i18n="resultsLabel">结果数</b><strong id="resultCount">0</strong></div>
+      </div>
+      <div class="log-panel">
+        <div id="startBanner" class="boot-banner" hidden>
+          <div class="boot-banner-top">
+            <span>AIPerf GUI</span>
+            <span>[Lu Hao]</span>
+          </div>
+          <div class="boot-banner-body">
+            <div class="boot-banner-title" id="bannerTitle">AIPerf GUI 0.12.0</div>
+            <div class="boot-banner-subtitle" data-i18n="bannerSubtitle">Containerized Edition</div>
+            <div class="boot-banner-loading" data-i18n="bannerLoading">Loading...</div>
+            <div class="boot-banner-copy" data-i18n="bannerCopyright">(C)Copyright BlueSkyGPT 2026.08. All rights reserved.</div>
+          </div>
+        </div>
+        <pre id="logs" data-log-key="ready">准备就绪。</pre>
+      </div>
+    </section>
+    <footer class="copyright-line">(C)Copyright BlueSkyGPT 2026.08. All rights reserved.</footer>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let activeRun = null;
+    let poller = null;
+    let currentLang = localStorage.getItem("aiperfGuiLang") || "zh";
+    let aiperfVersion = "0.12.0";
+
+    const I18N = {
+      zh: {
+        language: "语言",
+        help: "帮助",
+        helpTitle: "界面帮助",
+        close: "关闭",
+        benchmark: "基准测试",
+        optional: "可选",
+        model: "模型",
+        selectModel: "选择模型",
+        fetchModels: "获取模型",
+        fetching: "获取中",
+        endpoint: "端点",
+        concurrency: "并发",
+        input: "输入",
+        output: "输出",
+        requests: "请求数",
+        warmup: "预热",
+        timeout: "超时",
+        action: "操作",
+        options: "选项",
+        streaming: "流式",
+        fixedOutput: "固定输出",
+        serverMetrics: "服务端指标",
+        proxy: "代理",
+        proxyUrl: "代理地址",
+        noProxy: "不走代理",
+        result: "结果",
+        noResult: "暂无结果",
+        latencyByConcurrency: "延迟 / 并发",
+        throughputByConcurrency: "吞吐 / 并发",
+        runStatusTitle: "运行状态",
+        statusLabel: "状态",
+        resultsLabel: "结果数",
+        start: "开始",
+        checkAiperf: "检查 AIPerf",
+        ready: "准备就绪。",
+        starting: "正在启动...",
+        bannerSubtitle: "Containerized Edition",
+        bannerLoading: "Loading...",
+        bannerCopyright: "(C)Copyright BlueSkyGPT 2026.08. All rights reserved.",
+        fetchingModels: "正在获取模型列表...",
+        modelsLoaded: count => `已加载 ${count} 个模型。`,
+        modelsFailed: message => `获取模型失败：${message}`,
+        noModels: "获取成功，但没有返回可用模型。",
+        aiperfReady: version => `AIPerf ${version} 可用。`,
+        aiperfMissing: message => `AIPerf 不可用：${message}`,
+        yes: "是",
+        no: "否",
+        metricTtft: "TTFT P50",
+        metricRequestP99: "请求 P99",
+        metricItl: "ITL P50",
+        metricOutputTps: "输出 TPS",
+        metricRps: "RPS",
+        metricOutputLen: "输出长度",
+        unitConcurrency: c => `并发=${c}`,
+        unitTokensSec: "tokens/sec",
+        unitRequestsSec: "requests/sec",
+        unitTokens: "tokens",
+        status_idle: "待命",
+        status_queued: "排队中",
+        status_running: "运行中",
+        status_succeeded: "成功",
+        status_failed: "失败"
+      },
+      en: {
+        language: "Language",
+        help: "Help",
+        helpTitle: "Interface Help",
+        close: "Close",
+        benchmark: "Benchmark",
+        optional: "optional",
+        model: "Model",
+        selectModel: "Select model",
+        fetchModels: "Fetch Models",
+        fetching: "Fetching",
+        endpoint: "Endpoint",
+        concurrency: "Concurrency",
+        input: "Input",
+        output: "Output",
+        requests: "Requests",
+        warmup: "Warmup",
+        timeout: "Timeout",
+        action: "Action",
+        options: "Options",
+        streaming: "Streaming",
+        fixedOutput: "Fixed output",
+        serverMetrics: "Server metrics",
+        proxy: "Proxy",
+        proxyUrl: "Proxy URL",
+        noProxy: "No Proxy",
+        result: "Result",
+        noResult: "No result",
+        latencyByConcurrency: "Latency by Concurrency",
+        throughputByConcurrency: "Throughput by Concurrency",
+        runStatusTitle: "Run Status",
+        statusLabel: "Status",
+        resultsLabel: "Results",
+        start: "Start",
+        checkAiperf: "Check AIPerf",
+        ready: "Ready.",
+        starting: "Starting...",
+        bannerSubtitle: "Containerized Edition",
+        bannerLoading: "Loading...",
+        bannerCopyright: "(C)Copyright BlueSkyGPT 2026.08. All rights reserved.",
+        fetchingModels: "Fetching model list...",
+        modelsLoaded: count => `${count} models loaded.`,
+        modelsFailed: message => `Failed to fetch models: ${message}`,
+        noModels: "Fetch succeeded, but no models were returned.",
+        aiperfReady: version => `AIPerf ${version} is available.`,
+        aiperfMissing: message => `AIPerf is unavailable: ${message}`,
+        yes: "yes",
+        no: "no",
+        metricTtft: "TTFT P50",
+        metricRequestP99: "Request P99",
+        metricItl: "ITL P50",
+        metricOutputTps: "Output TPS",
+        metricRps: "RPS",
+        metricOutputLen: "Output Len",
+        unitConcurrency: c => `c=${c}`,
+        unitTokensSec: "tokens/sec",
+        unitRequestsSec: "requests/sec",
+        unitTokens: "tokens",
+        status_idle: "idle",
+        status_queued: "queued",
+        status_running: "running",
+        status_succeeded: "succeeded",
+        status_failed: "failed"
+      },
+      fr: {
+        language: "Langue",
+        help: "Aide",
+        helpTitle: "Aide de l'interface",
+        close: "Fermer",
+        benchmark: "Benchmark",
+        optional: "facultatif",
+        model: "Modele",
+        selectModel: "Choisir le modele",
+        fetchModels: "Charger les modeles",
+        fetching: "Chargement",
+        endpoint: "Endpoint",
+        concurrency: "Concurrence",
+        input: "Entree",
+        output: "Sortie",
+        requests: "Requetes",
+        warmup: "Prechauffe",
+        timeout: "Delai",
+        action: "Action",
+        options: "Options",
+        streaming: "Streaming",
+        fixedOutput: "Sortie fixe",
+        serverMetrics: "Metriques serveur",
+        proxy: "Proxy",
+        proxyUrl: "URL du proxy",
+        noProxy: "Sans proxy",
+        result: "Resultat",
+        noResult: "Aucun resultat",
+        latencyByConcurrency: "Latence par concurrence",
+        throughputByConcurrency: "Debit par concurrence",
+        runStatusTitle: "Etat d'execution",
+        statusLabel: "Etat",
+        resultsLabel: "Resultats",
+        start: "Demarrer",
+        checkAiperf: "Verifier AIPerf",
+        ready: "Pret.",
+        starting: "Demarrage...",
+        bannerSubtitle: "Edition conteneurisee",
+        bannerLoading: "Chargement...",
+        bannerCopyright: "(C)Copyright BlueSkyGPT 2026.08. Tous droits reserves.",
+        fetchingModels: "Chargement de la liste des modeles...",
+        modelsLoaded: count => `${count} modeles charges.`,
+        modelsFailed: message => `Echec du chargement des modeles : ${message}`,
+        noModels: "Chargement reussi, mais aucun modele retourne.",
+        aiperfReady: version => `AIPerf ${version} est disponible.`,
+        aiperfMissing: message => `AIPerf indisponible : ${message}`,
+        yes: "oui",
+        no: "non",
+        metricTtft: "TTFT P50",
+        metricRequestP99: "Requete P99",
+        metricItl: "ITL P50",
+        metricOutputTps: "TPS sortie",
+        metricRps: "RPS",
+        metricOutputLen: "Longueur sortie",
+        unitConcurrency: c => `c=${c}`,
+        unitTokensSec: "tokens/s",
+        unitRequestsSec: "requetes/s",
+        unitTokens: "tokens",
+        status_idle: "pret",
+        status_queued: "en file",
+        status_running: "en cours",
+        status_succeeded: "reussi",
+        status_failed: "echec"
+      },
+      de: {
+        language: "Sprache",
+        help: "Hilfe",
+        helpTitle: "Oberflaechenhilfe",
+        close: "Schliessen",
+        benchmark: "Benchmark",
+        optional: "optional",
+        model: "Modell",
+        selectModel: "Modell waehlen",
+        fetchModels: "Modelle laden",
+        fetching: "Laedt",
+        endpoint: "Endpoint",
+        concurrency: "Parallelitaet",
+        input: "Eingabe",
+        output: "Ausgabe",
+        requests: "Anfragen",
+        warmup: "Warmup",
+        timeout: "Timeout",
+        action: "Aktion",
+        options: "Optionen",
+        streaming: "Streaming",
+        fixedOutput: "Feste Ausgabe",
+        serverMetrics: "Servermetriken",
+        proxy: "Proxy",
+        proxyUrl: "Proxy URL",
+        noProxy: "Ohne Proxy",
+        result: "Ergebnis",
+        noResult: "Kein Ergebnis",
+        latencyByConcurrency: "Latenz nach Parallelitaet",
+        throughputByConcurrency: "Durchsatz nach Parallelitaet",
+        runStatusTitle: "Laufstatus",
+        statusLabel: "Status",
+        resultsLabel: "Ergebnisse",
+        start: "Start",
+        checkAiperf: "AIPerf pruefen",
+        ready: "Bereit.",
+        starting: "Startet...",
+        bannerSubtitle: "Containerisierte Edition",
+        bannerLoading: "Laedt...",
+        bannerCopyright: "(C)Copyright BlueSkyGPT 2026.08. Alle Rechte vorbehalten.",
+        fetchingModels: "Modellliste wird geladen...",
+        modelsLoaded: count => `${count} Modelle geladen.`,
+        modelsFailed: message => `Modelle konnten nicht geladen werden: ${message}`,
+        noModels: "Laden erfolgreich, aber keine Modelle erhalten.",
+        aiperfReady: version => `AIPerf ${version} ist verfuegbar.`,
+        aiperfMissing: message => `AIPerf ist nicht verfuegbar: ${message}`,
+        yes: "ja",
+        no: "nein",
+        metricTtft: "TTFT P50",
+        metricRequestP99: "Anfrage P99",
+        metricItl: "ITL P50",
+        metricOutputTps: "Ausgabe TPS",
+        metricRps: "RPS",
+        metricOutputLen: "Ausgabelaenge",
+        unitConcurrency: c => `c=${c}`,
+        unitTokensSec: "tokens/s",
+        unitRequestsSec: "anfragen/s",
+        unitTokens: "tokens",
+        status_idle: "bereit",
+        status_queued: "wartet",
+        status_running: "laeuft",
+        status_succeeded: "erfolgreich",
+        status_failed: "fehlgeschlagen"
+      },
+      es: {
+        language: "Idioma",
+        help: "Ayuda",
+        helpTitle: "Ayuda de interfaz",
+        close: "Cerrar",
+        benchmark: "Benchmark",
+        optional: "opcional",
+        model: "Modelo",
+        selectModel: "Elegir modelo",
+        fetchModels: "Cargar modelos",
+        fetching: "Cargando",
+        endpoint: "Endpoint",
+        concurrency: "Concurrencia",
+        input: "Entrada",
+        output: "Salida",
+        requests: "Solicitudes",
+        warmup: "Preparacion",
+        timeout: "Tiempo limite",
+        action: "Accion",
+        options: "Opciones",
+        streaming: "Streaming",
+        fixedOutput: "Salida fija",
+        serverMetrics: "Metricas servidor",
+        proxy: "Proxy",
+        proxyUrl: "URL proxy",
+        noProxy: "Sin proxy",
+        result: "Resultado",
+        noResult: "Sin resultado",
+        latencyByConcurrency: "Latencia por concurrencia",
+        throughputByConcurrency: "Rendimiento por concurrencia",
+        runStatusTitle: "Estado de ejecucion",
+        statusLabel: "Estado",
+        resultsLabel: "Resultados",
+        start: "Iniciar",
+        checkAiperf: "Comprobar AIPerf",
+        ready: "Listo.",
+        starting: "Iniciando...",
+        bannerSubtitle: "Edicion contenedorizada",
+        bannerLoading: "Cargando...",
+        bannerCopyright: "(C)Copyright BlueSkyGPT 2026.08. Todos los derechos reservados.",
+        fetchingModels: "Cargando lista de modelos...",
+        modelsLoaded: count => `${count} modelos cargados.`,
+        modelsFailed: message => `No se pudieron cargar los modelos: ${message}`,
+        noModels: "Carga correcta, pero no se devolvieron modelos.",
+        aiperfReady: version => `AIPerf ${version} esta disponible.`,
+        aiperfMissing: message => `AIPerf no esta disponible: ${message}`,
+        yes: "si",
+        no: "no",
+        metricTtft: "TTFT P50",
+        metricRequestP99: "Solicitud P99",
+        metricItl: "ITL P50",
+        metricOutputTps: "TPS salida",
+        metricRps: "RPS",
+        metricOutputLen: "Longitud salida",
+        unitConcurrency: c => `c=${c}`,
+        unitTokensSec: "tokens/s",
+        unitRequestsSec: "solicitudes/s",
+        unitTokens: "tokens",
+        status_idle: "listo",
+        status_queued: "en cola",
+        status_running: "en curso",
+        status_succeeded: "correcto",
+        status_failed: "fallo"
+      }
+    };
+
+    const HELP_DATA = {
+      zh: [
+        ["Base URL", "OpenAI-compatible 服务地址，通常以 /v1 结尾。", "例：https://apihub.agnes-ai.com/v1；http://127.0.0.1:8000/v1；http://192.168.1.100:8000/v1"],
+        ["API Key", "访问模型服务的密钥；只用于本次请求，不写入历史配置。", "例：sk-...；留空用于本地无鉴权服务；使用平台生成的专用测试 Key"],
+        ["Model", "要压测的模型名称，可以手动输入，也可以通过模型下拉按钮回填。", "例：agnes-2.0-flash；Qwen3-32B；deepseek-r1"],
+        ["获取模型", "用当前 Base URL 和 API Key 请求 /models，成功后启用旁边的下拉按钮。", "例：先填 API Key 再获取；开启代理后获取；失败时看红色提示"],
+        ["模型下拉按钮", "仅用于展开已获取的模型列表；选中后只更新 Model 输入框。", "例：获取成功后选择 agnes-2.0-flash；切换到 Qwen3-32B；获取失败时保持灰色"],
+        ["Endpoint", "选择 AIPerf 调用的接口类型。", "例：chat；completions"],
+        ["Concurrency", "并发档位，多个数字用英文逗号分隔，AIPerf 会逐档运行。", "例：1；1,2,4,8；8,16,32"],
+        ["Input", "每个请求的合成输入 token 数。", "例：128；512；2048"],
+        ["Output", "期望输出 token 数。", "例：32；128；512"],
+        ["Requests", "每个并发档位的正式请求数。", "例：1 用于冒烟测试；20 用于快速对比；100 用于稳定采样"],
+        ["Warmup", "正式统计前的预热请求数。", "例：1；3；5"],
+        ["Timeout", "单请求超时时间，单位秒。", "例：60；120；300"],
+        ["Action", "开始压测或检查容器内 AIPerf 是否可执行。", "例：开始；检查 AIPerf"],
+        ["Options", "控制压测请求的行为和统计方式。", "例：Streaming；固定输出；服务端指标"],
+        ["Proxy", "勾选后 AIPerf 和获取模型会使用代理访问外部服务。", "例：不勾选直连；勾选走 192.168.1.181:7890；内网模型通常不勾选"],
+        ["Proxy URL", "HTTP/HTTPS 代理地址。", "例：http://192.168.1.181:7890；http://127.0.0.1:7890；http://proxy.local:8080"],
+        ["No Proxy", "这些地址不走代理，多个值用英文逗号分隔。", "例：127.0.0.1,localhost；192.168.1.0/24；*.local"],
+        ["Result", "解析 AIPerf 输出，把关键指标用数字和曲线展示。", "例：TTFT P50；Request P99；Output TPS"],
+        ["Run Status", "显示运行编号、当前状态、AIPerf 可用性和实时日志。", "例：queued；running；succeeded"]
+      ],
+      en: [
+        ["Base URL", "OpenAI-compatible service URL, usually ending with /v1.", "Examples: https://apihub.agnes-ai.com/v1; http://127.0.0.1:8000/v1; http://192.168.1.100:8000/v1"],
+        ["API Key", "Token for the model service; used for this run and not saved in history.", "Examples: sk-...; blank for local no-auth services; a dedicated test key"],
+        ["Model", "Model name to benchmark. Type it manually or fill it from the model menu.", "Examples: agnes-2.0-flash; Qwen3-32B; deepseek-r1"],
+        ["Fetch Models", "Calls /models with the current Base URL and API Key, then enables the menu on success.", "Examples: fetch after entering a key; fetch through proxy; read the red error on failure"],
+        ["Model Menu", "Opens the fetched model list. Choosing one only updates the Model field.", "Examples: choose agnes-2.0-flash; switch to Qwen3-32B; stays gray if fetch fails"],
+        ["Endpoint", "AIPerf endpoint type.", "Examples: chat; completions"],
+        ["Concurrency", "Concurrency levels separated by commas. AIPerf runs them one by one.", "Examples: 1; 1,2,4,8; 8,16,32"],
+        ["Input", "Synthetic input token count per request.", "Examples: 128; 512; 2048"],
+        ["Output", "Expected output token count.", "Examples: 32; 128; 512"],
+        ["Requests", "Measured request count per concurrency level.", "Examples: 1 for smoke tests; 20 for quick comparison; 100 for stable sampling"],
+        ["Warmup", "Warmup requests before measured traffic.", "Examples: 1; 3; 5"],
+        ["Timeout", "Per-request timeout in seconds.", "Examples: 60; 120; 300"],
+        ["Action", "Start a benchmark or check whether AIPerf is available in the container.", "Examples: Start; Check AIPerf"],
+        ["Options", "Controls request behavior and metric collection.", "Examples: Streaming; Fixed output; Server metrics"],
+        ["Proxy", "When enabled, model fetching and AIPerf traffic use the proxy.", "Examples: direct when off; 192.168.1.181:7890 when on; keep off for many LAN models"],
+        ["Proxy URL", "HTTP/HTTPS proxy address.", "Examples: http://192.168.1.181:7890; http://127.0.0.1:7890; http://proxy.local:8080"],
+        ["No Proxy", "Addresses that bypass the proxy, separated by commas.", "Examples: 127.0.0.1,localhost; 192.168.1.0/24; *.local"],
+        ["Result", "Parses AIPerf output and shows key metrics as numbers and charts.", "Examples: TTFT P50; Request P99; Output TPS"],
+        ["Run Status", "Shows run id, current state, AIPerf availability, and live logs.", "Examples: queued; running; succeeded"]
+      ],
+      fr: [
+        ["Base URL", "URL du service compatible OpenAI, souvent terminee par /v1.", "Exemples : https://apihub.agnes-ai.com/v1 ; http://127.0.0.1:8000/v1 ; http://192.168.1.100:8000/v1"],
+        ["API Key", "Cle d'acces au service modele ; utilisee pour cet essai et non stockee dans l'historique.", "Exemples : sk-... ; vide pour un service local sans auth ; cle de test dediee"],
+        ["Modele", "Nom du modele a tester. Saisie manuelle ou remplissage depuis le menu.", "Exemples : agnes-2.0-flash ; Qwen3-32B ; deepseek-r1"],
+        ["Charger les modeles", "Appelle /models avec l'URL et la cle actuelles, puis active le menu en cas de succes.", "Exemples : apres saisie de la cle ; via proxy ; lire l'erreur rouge en cas d'echec"],
+        ["Menu modele", "Ouvre la liste chargee. Le choix met seulement a jour le champ Modele.", "Exemples : choisir agnes-2.0-flash ; passer a Qwen3-32B ; reste gris si le chargement echoue"],
+        ["Endpoint", "Type d'endpoint utilise par AIPerf.", "Exemples : chat ; completions"],
+        ["Concurrence", "Niveaux de concurrence separes par des virgules.", "Exemples : 1 ; 1,2,4,8 ; 8,16,32"],
+        ["Entree", "Nombre de tokens d'entree synthetiques par requete.", "Exemples : 128 ; 512 ; 2048"],
+        ["Sortie", "Nombre de tokens de sortie attendu.", "Exemples : 32 ; 128 ; 512"],
+        ["Requetes", "Nombre de requetes mesurees par niveau.", "Exemples : 1 pour fumee ; 20 pour comparaison rapide ; 100 pour echantillon stable"],
+        ["Prechauffe", "Requetes de prechauffe avant les mesures.", "Exemples : 1 ; 3 ; 5"],
+        ["Delai", "Delai par requete en secondes.", "Exemples : 60 ; 120 ; 300"],
+        ["Action", "Demarrer un test ou verifier AIPerf dans le conteneur.", "Exemples : Demarrer ; Verifier AIPerf"],
+        ["Options", "Controle le comportement des requetes et la collecte des metriques.", "Exemples : Streaming ; Sortie fixe ; Metriques serveur"],
+        ["Proxy", "Active le proxy pour charger les modeles et executer AIPerf.", "Exemples : direct si desactive ; 192.168.1.181:7890 si active ; souvent desactive pour le LAN"],
+        ["URL du proxy", "Adresse du proxy HTTP/HTTPS.", "Exemples : http://192.168.1.181:7890 ; http://127.0.0.1:7890 ; http://proxy.local:8080"],
+        ["Sans proxy", "Adresses qui contournent le proxy, separees par des virgules.", "Exemples : 127.0.0.1,localhost ; 192.168.1.0/24 ; *.local"],
+        ["Resultat", "Analyse la sortie AIPerf et affiche les metriques en chiffres et graphiques.", "Exemples : TTFT P50 ; Requete P99 ; TPS sortie"],
+        ["Etat d'execution", "Affiche l'id, l'etat courant, la disponibilite AIPerf et les journaux.", "Exemples : en file ; en cours ; reussi"]
+      ],
+      de: [
+        ["Base URL", "OpenAI-kompatible Service-URL, meist mit /v1 am Ende.", "Beispiele: https://apihub.agnes-ai.com/v1; http://127.0.0.1:8000/v1; http://192.168.1.100:8000/v1"],
+        ["API Key", "Schluessel fuer den Modellservice; nur fuer diesen Lauf genutzt und nicht gespeichert.", "Beispiele: sk-...; leer fuer lokale Dienste ohne Auth; dedizierter Test-Key"],
+        ["Modell", "Name des zu testenden Modells. Manuell eingeben oder aus dem Menue uebernehmen.", "Beispiele: agnes-2.0-flash; Qwen3-32B; deepseek-r1"],
+        ["Modelle laden", "Ruft /models mit aktueller URL und Key auf und aktiviert bei Erfolg das Menue.", "Beispiele: nach Key-Eingabe; ueber Proxy; rote Fehlermeldung beachten"],
+        ["Modellmenue", "Oeffnet die geladene Modellliste. Auswahl aktualisiert nur das Modellfeld.", "Beispiele: agnes-2.0-flash waehlen; zu Qwen3-32B wechseln; bei Fehler grau"],
+        ["Endpoint", "Endpoint-Typ fuer AIPerf.", "Beispiele: chat; completions"],
+        ["Parallelitaet", "Parallelitaetsstufen, durch Kommas getrennt.", "Beispiele: 1; 1,2,4,8; 8,16,32"],
+        ["Eingabe", "Synthetische Eingabe-Tokens pro Anfrage.", "Beispiele: 128; 512; 2048"],
+        ["Ausgabe", "Erwartete Ausgabe-Tokens.", "Beispiele: 32; 128; 512"],
+        ["Anfragen", "Gemessene Anfragen pro Stufe.", "Beispiele: 1 fuer Smoke-Test; 20 fuer schnellen Vergleich; 100 fuer stabile Stichprobe"],
+        ["Warmup", "Warmup-Anfragen vor der Messung.", "Beispiele: 1; 3; 5"],
+        ["Timeout", "Timeout pro Anfrage in Sekunden.", "Beispiele: 60; 120; 300"],
+        ["Aktion", "Benchmark starten oder AIPerf im Container pruefen.", "Beispiele: Start; AIPerf pruefen"],
+        ["Optionen", "Steuert Anfrageverhalten und Metrikerfassung.", "Beispiele: Streaming; Feste Ausgabe; Servermetriken"],
+        ["Proxy", "Wenn aktiv, nutzen Modellabruf und AIPerf den Proxy.", "Beispiele: aus fuer direkt; 192.168.1.181:7890 an; fuer LAN oft aus"],
+        ["Proxy URL", "HTTP/HTTPS-Proxy-Adresse.", "Beispiele: http://192.168.1.181:7890; http://127.0.0.1:7890; http://proxy.local:8080"],
+        ["Ohne Proxy", "Adressen ohne Proxy, durch Kommas getrennt.", "Beispiele: 127.0.0.1,localhost; 192.168.1.0/24; *.local"],
+        ["Ergebnis", "Analysiert AIPerf-Ausgabe und zeigt Kennzahlen als Zahlen und Diagramme.", "Beispiele: TTFT P50; Anfrage P99; Ausgabe TPS"],
+        ["Laufstatus", "Zeigt Lauf-ID, Status, AIPerf-Verfuegbarkeit und Live-Logs.", "Beispiele: wartet; laeuft; erfolgreich"]
+      ],
+      es: [
+        ["Base URL", "URL del servicio compatible con OpenAI, normalmente termina en /v1.", "Ejemplos: https://apihub.agnes-ai.com/v1; http://127.0.0.1:8000/v1; http://192.168.1.100:8000/v1"],
+        ["API Key", "Clave para acceder al servicio de modelos; se usa en esta prueba y no se guarda.", "Ejemplos: sk-...; vacio para servicio local sin auth; clave dedicada de prueba"],
+        ["Modelo", "Nombre del modelo a probar. Puede escribirse o elegirse desde el menu.", "Ejemplos: agnes-2.0-flash; Qwen3-32B; deepseek-r1"],
+        ["Cargar modelos", "Llama a /models con la URL y clave actuales, y activa el menu si tiene exito.", "Ejemplos: despues de poner la clave; con proxy; leer el error rojo si falla"],
+        ["Menu de modelos", "Abre la lista cargada. La eleccion solo actualiza el campo Modelo.", "Ejemplos: elegir agnes-2.0-flash; cambiar a Qwen3-32B; queda gris si falla"],
+        ["Endpoint", "Tipo de endpoint usado por AIPerf.", "Ejemplos: chat; completions"],
+        ["Concurrencia", "Niveles separados por comas.", "Ejemplos: 1; 1,2,4,8; 8,16,32"],
+        ["Entrada", "Tokens sinteticos de entrada por solicitud.", "Ejemplos: 128; 512; 2048"],
+        ["Salida", "Tokens esperados de salida.", "Ejemplos: 32; 128; 512"],
+        ["Solicitudes", "Solicitudes medidas por nivel.", "Ejemplos: 1 para prueba rapida; 20 para comparar; 100 para muestra estable"],
+        ["Preparacion", "Solicitudes de calentamiento antes de medir.", "Ejemplos: 1; 3; 5"],
+        ["Tiempo limite", "Tiempo limite por solicitud en segundos.", "Ejemplos: 60; 120; 300"],
+        ["Accion", "Inicia benchmark o comprueba AIPerf dentro del contenedor.", "Ejemplos: Iniciar; Comprobar AIPerf"],
+        ["Opciones", "Controla el comportamiento y las metricas.", "Ejemplos: Streaming; Salida fija; Metricas servidor"],
+        ["Proxy", "Si esta activo, la carga de modelos y AIPerf usan proxy.", "Ejemplos: directo si desactivado; 192.168.1.181:7890 si activo; normalmente off para LAN"],
+        ["URL proxy", "Direccion del proxy HTTP/HTTPS.", "Ejemplos: http://192.168.1.181:7890; http://127.0.0.1:7890; http://proxy.local:8080"],
+        ["Sin proxy", "Direcciones que no usan proxy, separadas por comas.", "Ejemplos: 127.0.0.1,localhost; 192.168.1.0/24; *.local"],
+        ["Resultado", "Analiza la salida AIPerf y muestra metricas en numeros y graficas.", "Ejemplos: TTFT P50; Solicitud P99; TPS salida"],
+        ["Estado de ejecucion", "Muestra id, estado, disponibilidad de AIPerf y logs en vivo.", "Ejemplos: en cola; en curso; correcto"]
+      ]
+    };
+
+    function t(key, ...args) {
+      const pack = I18N[currentLang] || I18N.zh;
+      const value = pack[key] ?? I18N.en[key] ?? key;
+      return typeof value === "function" ? value(...args) : value;
+    }
+
+    function updateTitle() {
+      const title = `AIPerf GUI v${aiperfVersion}`;
+      $("appTitle").textContent = title;
+      document.title = title;
+      $("bannerTitle").textContent = `AIPerf GUI ${aiperfVersion}`;
+    }
+
+    function statusText(value) {
+      return t(`status_${value}`) || value || "-";
+    }
+
+    function setStatus(el, value) {
+      el.dataset.statusValue = value || "";
+      el.textContent = value ? statusText(value) : "-";
+    }
+
+    function setInfoKey(key, tone = "", ...args) {
+      const el = $("infoText");
+      el.dataset.infoKey = key;
+      el.dataset.infoArgs = JSON.stringify(args);
+      el.className = `note ${tone}`.trim();
+      el.textContent = t(key, ...args);
+    }
+
+    function refreshInfoText() {
+      const el = $("infoText");
+      if (!el.dataset.infoKey) return;
+      const args = JSON.parse(el.dataset.infoArgs || "[]");
+      el.textContent = t(el.dataset.infoKey, ...args);
+    }
+
+    function setLogKey(key) {
+      const logs = $("logs");
+      logs.dataset.logKey = key;
+      logs.textContent = t(key);
+    }
+
+    function showStartBanner(show) {
+      $("startBanner").hidden = !show;
+      updateTitle();
+    }
+
+    function renderHelp() {
+      if (!$("helpGrid")) return;
+      $("helpGrid").innerHTML = (HELP_DATA[currentLang] || HELP_DATA.en).map(([name, desc, examples]) => `
+        <div class="help-item">
+          <strong>${name}</strong>
+          <p>${desc}</p>
+          <small>${examples}</small>
+        </div>
+      `).join("");
+    }
+
+    function closeModelMenu() {
+      $("modelMenu").hidden = true;
+      $("modelSelectBtn").setAttribute("aria-expanded", "false");
+    }
+
+    function renderModelMenu(models) {
+      const menu = $("modelMenu");
+      menu.innerHTML = "";
+      for (const model of models || []) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "model-option";
+        item.textContent = model;
+        item.addEventListener("click", () => {
+          $("model").value = model;
+          closeModelMenu();
+        });
+        menu.appendChild(item);
+      }
+    }
+
+    function localize() {
+      document.documentElement.lang = currentLang === "zh" ? "zh-CN" : currentLang;
+      $("languageSelect").value = currentLang;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+      });
+      document.querySelectorAll("[data-i18n-title]").forEach(el => {
+        const text = t(el.dataset.i18nTitle);
+        el.title = text;
+        el.setAttribute("aria-label", text);
+      });
+      updateTitle();
+      renderHelp();
+      refreshInfoText();
+      document.querySelectorAll("[data-status-value]").forEach(el => {
+        setStatus(el, el.dataset.statusValue);
+      });
+      document.querySelectorAll("[data-bool-state]").forEach(el => {
+        el.textContent = t(el.dataset.boolState);
+      });
+      if ($("logs").dataset.logKey) $("logs").textContent = t($("logs").dataset.logKey);
+      $("fetchModelsBtn").textContent = $("fetchModelsBtn").dataset.state === "fetching" ? t("fetching") : t("fetchModels");
+    }
+
+    function config() {
+      return {
+        base_url: $("baseUrl").value.trim(),
+        model: $("model").value.trim(),
+        api_key: $("apiKey").value,
+        endpoint_type: $("endpoint").value,
+        input_tokens: Number($("inputTokens").value),
+        output_tokens: Number($("outputTokens").value),
+        request_count: Number($("requestCount").value),
+        warmup_count: Number($("warmupCount").value),
+        timeout: Number($("timeout").value),
+        streaming: $("streaming").checked,
+        fixed_output: $("fixedOutput").checked,
+        server_token_count: $("serverTokenCount").checked,
+        proxy_enabled: $("proxyEnabled").checked,
+        proxy_url: $("proxyUrl").value.trim(),
+        no_proxy: $("noProxy").value.trim()
+      };
+    }
+
+    function concurrencies() {
+      return $("concurrency").value.split(",").map(x => Number(x.trim())).filter(Boolean);
+    }
+
+    function metricValue(exportData, key, stat = "avg") {
+      const value = exportData?.[key]?.[stat] ?? exportData?.[key]?.avg;
+      return typeof value === "number" && Number.isFinite(value) ? value : null;
+    }
+
+    function fmt(value, digits = 2) {
+      if (value === null || value === undefined || Number.isNaN(value)) return "-";
+      if (Math.abs(value) >= 1000) return value.toLocaleString(undefined, {maximumFractionDigits: digits});
+      return value.toLocaleString(undefined, {maximumFractionDigits: digits, minimumFractionDigits: value % 1 ? digits : 0});
+    }
+
+    function latestResult(run) {
+      const rows = (run.results || []).filter(r => r.export && Object.keys(r.export).length);
+      return rows.length ? rows[rows.length - 1] : null;
+    }
+
+    function buildMetric(label, value, unit, percent) {
+      const width = Math.max(0, Math.min(100, percent || 0));
+      return `<div class="metric"><b>${label}</b><strong>${value}</strong><small>${unit}</small><div class="bar" style="--w:${width}%"><span></span></div></div>`;
+    }
+
+    function renderResults(run) {
+      setStatus($("resultState"), run.status || "idle");
+      const rows = (run.results || []).filter(r => r.export && Object.keys(r.export).length);
+      if (!rows.length) {
+        $("resultEmpty").hidden = false;
+        $("resultContent").hidden = true;
+        return;
+      }
+
+      const last = latestResult(run);
+      const e = last.export;
+      const ttft = metricValue(e, "time_to_first_token", "p50");
+      const latency = metricValue(e, "request_latency", "p99");
+      const itl = metricValue(e, "inter_token_latency", "p50");
+      const outputTps = metricValue(e, "output_token_throughput");
+      const rps = metricValue(e, "request_throughput");
+      const osl = metricValue(e, "output_sequence_length");
+      const maxBase = Math.max(ttft || 0, latency || 0, itl || 0, outputTps || 0, rps || 0, osl || 0, 1);
+
+      $("resultMetrics").innerHTML = [
+        buildMetric(t("metricTtft"), `${fmt(ttft)} ms`, t("unitConcurrency", last.concurrency), (ttft || 0) / maxBase * 100),
+        buildMetric(t("metricRequestP99"), `${fmt(latency)} ms`, t("unitConcurrency", last.concurrency), (latency || 0) / maxBase * 100),
+        buildMetric(t("metricItl"), `${fmt(itl)} ms`, t("unitConcurrency", last.concurrency), (itl || 0) / maxBase * 100),
+        buildMetric(t("metricOutputTps"), fmt(outputTps), t("unitTokensSec"), (outputTps || 0) / maxBase * 100),
+        buildMetric(t("metricRps"), fmt(rps, 3), t("unitRequestsSec"), (rps || 0) / maxBase * 100),
+        buildMetric(t("metricOutputLen"), fmt(osl), t("unitTokens"), (osl || 0) / maxBase * 100)
+      ].join("");
+
+      $("resultEmpty").hidden = true;
+      $("resultContent").hidden = false;
+      drawLineChart("latencyChart", rows, [
+        {key: "time_to_first_token", stat: "p50", cls: "line-blue", point: "point-blue"},
+        {key: "request_latency", stat: "p99", cls: "line-green", point: "point-green"}
+      ], "ms");
+      drawLineChart("throughputChart", rows, [
+        {key: "output_token_throughput", stat: "avg", cls: "line-blue", point: "point-blue"},
+        {key: "request_throughput", stat: "avg", cls: "line-green", point: "point-green"}
+      ], "");
+    }
+
+    function drawLineChart(id, rows, series, unit) {
+      const svg = $(id);
+      const pad = {l: 42, r: 16, t: 14, b: 28};
+      const w = 620, h = 180;
+      const points = rows.map((row, i) => ({xLabel: row.concurrency, i, export: row.export}));
+      const values = [];
+      for (const s of series) {
+        for (const p of points) {
+          const v = metricValue(p.export, s.key, s.stat);
+          if (v !== null) values.push(v);
+        }
+      }
+      const maxY = Math.max(...values, 1);
+      const x = (i) => pad.l + (points.length === 1 ? (w - pad.l - pad.r) / 2 : i * (w - pad.l - pad.r) / (points.length - 1));
+      const y = (v) => h - pad.b - (v / maxY) * (h - pad.t - pad.b);
+      let html = `<line class="axis" x1="${pad.l}" y1="${h-pad.b}" x2="${w-pad.r}" y2="${h-pad.b}"></line><line class="axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h-pad.b}"></line>`;
+      html += `<text x="${pad.l}" y="11" font-size="10" fill="#6b778c">${fmt(maxY)} ${unit}</text>`;
+      for (const p of points) {
+        html += `<text x="${x(p.i)}" y="${h-8}" text-anchor="middle" font-size="10" fill="#6b778c">${p.xLabel}</text>`;
+      }
+      for (const s of series) {
+        const coords = points.map(p => {
+          const v = metricValue(p.export, s.key, s.stat);
+          return v === null ? null : [x(p.i), y(v), v];
+        }).filter(Boolean);
+        if (coords.length) {
+          html += `<polyline class="${s.cls}" points="${coords.map(c => `${c[0]},${c[1]}`).join(" ")}"></polyline>`;
+          html += coords.map(c => `<circle class="${s.point}" cx="${c[0]}" cy="${c[1]}" r="4"><title>${fmt(c[2])}</title></circle>`).join("");
+        }
+      }
+      svg.innerHTML = html;
+    }
+
+    async function checkInfo() {
+      const res = await fetch("/api/aiperf-info");
+      const data = await res.json();
+      const version = String(data.output || "").match(/\d+\.\d+\.\d+/)?.[0];
+      if (version) {
+        aiperfVersion = version;
+        updateTitle();
+      }
+      $("aiperfState").dataset.boolState = data.available ? "yes" : "no";
+      $("aiperfState").textContent = t($("aiperfState").dataset.boolState);
+      if (data.available) {
+        setInfoKey("aiperfReady", "ok", aiperfVersion);
+      } else {
+        setInfoKey("aiperfMissing", "error", data.message || "");
+      }
+      return data;
+    }
+
+    async function fetchModels() {
+      const btn = $("fetchModelsBtn");
+      const selectBtn = $("modelSelectBtn");
+      const list = $("modelList");
+      btn.disabled = true;
+      btn.dataset.state = "fetching";
+      btn.textContent = t("fetching");
+      selectBtn.disabled = true;
+      closeModelMenu();
+      list.innerHTML = "";
+      $("modelMenu").innerHTML = "";
+      setInfoKey("fetchingModels");
+      try {
+        const res = await fetch("/api/models", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({config: config()})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "fetch failed");
+        for (const model of data.models || []) {
+          list.insertAdjacentHTML("beforeend", `<option value="${model}"></option>`);
+        }
+        if ((data.models || []).length) {
+          renderModelMenu(data.models);
+          selectBtn.disabled = false;
+          setInfoKey("modelsLoaded", "ok", data.models.length);
+        } else {
+          selectBtn.disabled = true;
+          setInfoKey("noModels", "error");
+        }
+      } catch (err) {
+        selectBtn.disabled = true;
+        $("modelMenu").innerHTML = "";
+        setInfoKey("modelsFailed", "error", err.message);
+      } finally {
+        btn.disabled = false;
+        delete btn.dataset.state;
+        btn.textContent = t("fetchModels");
+      }
+    }
+
+    async function refreshRun() {
+      if (!activeRun) return;
+      const res = await fetch(`/api/runs/${activeRun}`);
+      const data = await res.json();
+      setStatus($("status"), data.status);
+      $("runId").textContent = data.id || "-";
+      setStatus($("runStatus"), data.status || "");
+      $("resultCount").textContent = (data.results || []).length;
+      delete $("logs").dataset.logKey;
+      $("logs").textContent = data.logs || JSON.stringify(data, null, 2);
+      renderResults(data);
+      if (["succeeded", "failed"].includes(data.status)) {
+        clearInterval(poller);
+      }
+    }
+
+    $("languageSelect").addEventListener("change", (event) => {
+      currentLang = event.target.value;
+      localStorage.setItem("aiperfGuiLang", currentLang);
+      localize();
+    });
+    $("infoBtn").addEventListener("click", checkInfo);
+    $("fetchModelsBtn").addEventListener("click", fetchModels);
+    $("helpBtn").addEventListener("click", () => {
+      window.location.href = "/help.html";
+    });
+    $("modelSelectBtn").addEventListener("click", () => {
+      if ($("modelSelectBtn").disabled) return;
+      const expanded = $("modelSelectBtn").getAttribute("aria-expanded") === "true";
+      $("modelMenu").hidden = expanded;
+      $("modelSelectBtn").setAttribute("aria-expanded", String(!expanded));
+    });
+    document.addEventListener("click", (event) => {
+      if (!$("modelSelectBtn").contains(event.target) && !$("modelMenu").contains(event.target)) {
+        closeModelMenu();
+      }
+    });
+    $("startBtn").addEventListener("click", async () => {
+      showStartBanner(true);
+      setLogKey("starting");
+      setStatus($("resultState"), "running");
+      const res = await fetch("/api/benchmark", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({config: config(), concurrencies: concurrencies()})
+      });
+      const data = await res.json();
+      activeRun = data.run_id;
+      $("runId").textContent = activeRun || "-";
+      if (!res.ok) {
+        $("logs").textContent = JSON.stringify(data, null, 2);
+        return;
+      }
+      clearInterval(poller);
+      poller = setInterval(refreshRun, 1000);
+      refreshRun();
+    });
+
+    localize();
+    checkInfo().catch(() => {});
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+services:
+  aiperf-gui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aiperf-gui:0.1.0
+    container_name: aiperf-gui
+    ports:
+      - "8080:8080"
+    volumes:
+      - aiperf-results:/data/results
+    restart: unless-stopped
+
+volumes:
+  aiperf-results:

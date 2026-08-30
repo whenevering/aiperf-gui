@@ -1,0 +1,10 @@
+FROM python:3.10-slim
+
+WORKDIR /opt/aiperf-gui
+
+COPY app/ /opt/aiperf-gui/app/
+
+ENV AIPERF_DATA_DIR=/data/results
+EXPOSE 8080
+
+CMD ["python3", "/opt/aiperf-gui/app/app.py"]
