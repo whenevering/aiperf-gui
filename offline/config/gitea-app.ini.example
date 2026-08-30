@@ -1,0 +1,14 @@
+[actions]
+ENABLED = true
+
+[repository]
+DEFAULT_BRANCH = main
+
+[packages]
+ENABLED = true
+
+[server]
+ROOT_URL = http://gitea.intra.local/
+
+[security]
+INSTALL_LOCK = true

@@ -1,0 +1,23 @@
+log:
+  level: info
+
+runner:
+  file: .runner
+  capacity: 1
+  envs:
+    REGISTRY: registry.intra.local
+    IMAGE_NAMESPACE: ai
+    AIPERF_BASE_IMAGE: registry.intra.local/ai/aiperf:0.12.0
+
+cache:
+  enabled: true
+  dir: .cache
+
+container:
+  network: host
+  privileged: false
+  valid_volumes:
+    - /var/run/docker.sock
+
+host:
+  workdir_parent: /var/lib/act_runner

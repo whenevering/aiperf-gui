@@ -1,0 +1,11 @@
+{
+  "insecure-registries": [
+    "registry.intra.local"
+  ],
+  "registry-mirrors": [],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "3"
+  }
+}

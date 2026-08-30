@@ -1,4 +1,5 @@
-FROM nvcr.io/nvidia/ai-dynamo/aiperf:0.12.0
+ARG AIPERF_BASE_IMAGE=nvcr.io/nvidia/ai-dynamo/aiperf:0.12.0
+FROM ${AIPERF_BASE_IMAGE}
 
 WORKDIR /opt/aiperf-gui
 

@@ -1,0 +1,20 @@
+steps:
+  build-and-push:
+    image: docker:27-cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      REGISTRY: registry.intra.local
+      IMAGE_NAMESPACE: ai
+      IMAGE_NAME: aiperf-gui
+      AIPERF_BASE_IMAGE: registry.intra.local/ai/aiperf:0.12.0
+    commands:
+      - set -euo pipefail
+      - export SHORT_SHA="$(git rev-parse --short HEAD)"
+      - docker build --build-arg AIPERF_BASE_IMAGE="$${AIPERF_BASE_IMAGE}" -t "$${REGISTRY}/$${IMAGE_NAMESPACE}/$${IMAGE_NAME}:$${SHORT_SHA}" -t "$${REGISTRY}/$${IMAGE_NAMESPACE}/$${IMAGE_NAME}:latest" .
+      - |
+        if [ -n "$${REGISTRY_USER:-}" ] && [ -n "$${REGISTRY_PASSWORD:-}" ]; then
+          printf '%s' "$${REGISTRY_PASSWORD}" | docker login "$${REGISTRY}" -u "$${REGISTRY_USER}" --password-stdin
+        fi
+      - docker push "$${REGISTRY}/$${IMAGE_NAMESPACE}/$${IMAGE_NAME}:$${SHORT_SHA}"
+      - docker push "$${REGISTRY}/$${IMAGE_NAMESPACE}/$${IMAGE_NAME}:latest"
