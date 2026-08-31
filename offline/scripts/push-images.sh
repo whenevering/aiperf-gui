@@ -3,6 +3,7 @@ set -euo pipefail
 
 : "${REGISTRY:=registry.intra.local}"
 : "${NAMESPACE:=ai}"
+: "${AIPERF_GUI_TAG:=0.1.0-2026-08-31}"
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ -f "${root}/config/env" ]; then
@@ -15,9 +16,9 @@ if [ -n "${REGISTRY_USER:-}" ] && [ -n "${REGISTRY_PASSWORD:-}" ]; then
 fi
 
 docker tag nvcr.io/nvidia/ai-dynamo/aiperf:0.12.0 "${REGISTRY}/${NAMESPACE}/aiperf:0.12.0"
-docker tag aiperf-gui:0.1.0 "${REGISTRY}/${NAMESPACE}/aiperf-gui:0.12.0-2026-08-30"
+docker tag aiperf-gui:0.1.0 "${REGISTRY}/${NAMESPACE}/aiperf-gui:${AIPERF_GUI_TAG}"
 docker tag aiperf-gui:0.1.0 "${REGISTRY}/${NAMESPACE}/aiperf-gui:latest"
 
 docker push "${REGISTRY}/${NAMESPACE}/aiperf:0.12.0"
-docker push "${REGISTRY}/${NAMESPACE}/aiperf-gui:0.12.0-2026-08-30"
+docker push "${REGISTRY}/${NAMESPACE}/aiperf-gui:${AIPERF_GUI_TAG}"
 docker push "${REGISTRY}/${NAMESPACE}/aiperf-gui:latest"

@@ -5,7 +5,7 @@
 ## 包内内容
 
 ```text
-aiperf-gui-offline-migration-2026-08-30/
+aiperf-gui-offline-migration-2026-08-31/
 ├── README.md
 ├── source/
 │   ├── aiperf-gui.git.bundle
@@ -14,8 +14,8 @@ aiperf-gui-offline-migration-2026-08-30/
 ├── images/
 │   ├── aiperf-base-0.12.0.tar
 │   ├── aiperf-base-0.12.0.sha256
-│   ├── aiperf-gui-0.12.0-2026-08-30.tar
-│   └── aiperf-gui-0.12.0-2026-08-30.sha256
+│   ├── aiperf-gui-0.1.0-2026-08-31.tar.gz
+│   └── aiperf-gui-0.1.0-2026-08-31.tar.gz.sha256
 ├── pipeline/
 │   ├── gitea-actions-docker-build.yml
 │   ├── woodpecker.yml
@@ -44,7 +44,7 @@ aiperf-gui-offline-migration-2026-08-30/
 
 可以把 `config/env.example` 复制为 `config/env`，并在里面写入内网 Gitea、Registry、账号等地址；脚本会自动读取该文件。也可以不创建 `config/env`，直接在执行脚本前用 `export` 设置变量。
 
-如果内网流水线平台本身也需要离线部署，请按 `config/required-images.txt` 先把 Gitea Runner、Woodpecker、Drone、`docker:27-cli` 等基础运行镜像镜像到内网 Registry。本包已经包含 AIPerf 基础镜像和 AIPerf GUI 镜像。
+如果内网流水线平台本身也需要离线部署，请按 `config/required-images.txt` 先把 Gitea Runner、Woodpecker、Drone、`docker:27-cli` 等基础运行镜像镜像到内网 Registry。本包应包含 AIPerf 基础镜像和当前 AIPerf GUI Release 镜像 `aiperf-gui-0.1.0-2026-08-31.tar.gz`。当前 Release 镜像 SHA256 为 `0d93c6204bda058a7d5aaa6f5c859ea29f6cdcfbf76d39283bcc2adf9b042789`。
 
 ## 迁移源码到 Gitea
 
@@ -88,9 +88,9 @@ http://gitea.intra.local/ai/aiperf-gui.git
 先校验文件：
 
 ```bash
-cd aiperf-gui-offline-migration-2026-08-30
+cd aiperf-gui-offline-migration-2026-08-31
 sha256sum -c images/aiperf-base-0.12.0.sha256
-sha256sum -c images/aiperf-gui-0.12.0-2026-08-30.sha256
+sha256sum -c images/aiperf-gui-0.1.0-2026-08-31.tar.gz.sha256
 ```
 
 加载镜像：
@@ -113,7 +113,7 @@ export REGISTRY_PASSWORD="your-password"
 
 ```text
 registry.intra.local/ai/aiperf:0.12.0
-registry.intra.local/ai/aiperf-gui:0.12.0-2026-08-30
+registry.intra.local/ai/aiperf-gui:0.1.0-2026-08-31
 registry.intra.local/ai/aiperf-gui:latest
 ```
 
