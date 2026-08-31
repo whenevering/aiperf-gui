@@ -18,8 +18,8 @@
       background: #ffffff;
       border-bottom: 1px solid #dfe3ea;
       padding: 0;
-      width: 100%;
-      max-width: 1500px;
+      width: calc(100% - 28px);
+      max-width: 1472px;
       margin: 0 auto;
       overflow: hidden;
     }
@@ -28,9 +28,9 @@
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      max-width: 1500px;
+      max-width: none;
       margin: 0 auto;
-      padding: 14px 28px;
+      padding: 14px;
     }
     h1 { margin: 0; font-size: 20px; line-height: 1.25; }
     .language-switch {
@@ -514,6 +514,9 @@
       text-align: center;
       margin-top: 10px;
     }
+    .copyright-line div + div {
+      margin-top: 2px;
+    }
     pre {
       margin: 0;
       color: #d6deeb;
@@ -553,7 +556,7 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1 id="appTitle">AIPerf GUI v0.12.0</h1>
+      <h1 id="appTitle">AIPerf GUI v0.1.0 Build 2026-08-31</h1>
       <div class="language-switch">
         <label for="languageSelect" data-i18n="language">语言</label>
         <select id="languageSelect">
@@ -710,13 +713,18 @@
         <pre id="logs" data-log-key="ready">准备就绪。</pre>
       </div>
     </section>
-    <footer class="copyright-line">(C)Copyright BlueSkyGPT 2026.08. All rights reserved.</footer>
+    <footer class="copyright-line">
+      <div id="footerAiperfVersion">Based on AIPerf v0.12.0</div>
+      <div>(C)Copyright BlueSkyGPT 2026.08. All rights reserved.</div>
+    </footer>
   </main>
   <script>
     const $ = (id) => document.getElementById(id);
     let activeRun = null;
     let poller = null;
     let currentLang = localStorage.getItem("aiperfGuiLang") || "zh";
+    const guiVersion = "0.1.0";
+    const buildDate = "2026-08-31";
     let aiperfVersion = "0.12.0";
     let latestRunData = null;
 
@@ -1228,10 +1236,11 @@
     }
 
     function updateTitle() {
-      const title = `AIPerf GUI v${aiperfVersion}`;
+      const title = `AIPerf GUI v${guiVersion} Build ${buildDate}`;
       $("appTitle").textContent = title;
       document.title = title;
-      $("bannerTitle").textContent = `AIPerf GUI ${aiperfVersion}`;
+      $("bannerTitle").textContent = `AIPerf GUI ${guiVersion}`;
+      $("footerAiperfVersion").textContent = `Based on AIPerf v${aiperfVersion}`;
     }
 
     function statusText(value) {
