@@ -249,6 +249,19 @@
     .metric b { display: block; font-size: 12px; color: #607089; }
     .metric strong { display: block; margin-top: 5px; font-size: 22px; line-height: 1.15; color: #172033; }
     .metric small { display: block; margin-top: 2px; color: #6b778c; }
+    .status-card.running {
+      animation: statusPulse 1.5s ease-in-out infinite;
+    }
+    .status-card.succeeded strong {
+      color: #166534;
+    }
+    .status-card.failed strong {
+      color: #8b1a1a;
+    }
+    @keyframes statusPulse {
+      0%, 100% { background: #fbfcfe; }
+      50% { background: #dcfce7; }
+    }
     .bar {
       height: 7px;
       border-radius: 999px;
@@ -693,7 +706,7 @@
       <h2><span data-i18n="runStatusTitle">运行状态</span> <span class="status" id="status" data-status-value="idle">待命</span></h2>
       <div class="status-grid">
         <div class="metric"><b>Run ID</b><strong id="runId">-</strong></div>
-        <div class="metric"><b data-i18n="statusLabel">状态</b><strong id="runStatus" data-status-value="">-</strong></div>
+        <div class="metric status-card" id="runStatusCard"><b data-i18n="statusLabel">状态</b><strong id="runStatus" data-status-value="">-</strong></div>
         <div class="metric"><b>AIPerf</b><strong id="aiperfState">?</strong></div>
         <div class="metric"><b data-i18n="resultsLabel">结果数</b><strong id="resultCount">0</strong></div>
       </div>
@@ -804,7 +817,7 @@
         status_idle: "待命",
         status_queued: "排队中",
         status_running: "运行中",
-        status_succeeded: "成功",
+        status_succeeded: "完成",
         status_failed: "失败"
       },
       en: {
@@ -1229,6 +1242,87 @@
       ]
     };
 
+    const ZH_SECTION_HINTS = {
+      "NVIDIA AIPerf | LLM Metrics: Effective": "LLM 指标：有效性",
+      "NVIDIA AIPerf | LLM Metrics: Active": "LLM 指标：活跃阶段",
+      "NVIDIA AIPerf | LLM Metrics: Usage": "LLM 指标：用量",
+      "NVIDIA AIPerf | LLM Metrics": "LLM 指标"
+    };
+
+    const ZH_METRIC_HINTS = {
+      "Active Decode Throughput (tokens/sec)": "活跃解码吞吐",
+      "Active Decode Throughput Per User (tokens/sec/user)": "单用户活跃解码吞吐",
+      "Active Prefill Throughput (tokens/sec)": "活跃预填充吞吐",
+      "Active Prefill Throughput Per User (tokens/sec/user)": "单用户活跃预填充吞吐",
+      "Active Total Throughput (tokens/sec)": "活跃总吞吐",
+      "Benchmark Duration (sec)": "基准测试耗时",
+      "Credit-to-Start Latency (ms)": "调度到开始延迟",
+      "Decode Duration (ms)": "解码耗时",
+      "E2E Output Token Throughput (tokens/sec/user)": "端到端单用户输出吞吐",
+      "Effective Concurrency (requests)": "有效并发",
+      "Effective Decode Concurrency (requests)": "有效解码并发",
+      "Effective Decode Throughput (tokens/sec)": "有效解码吞吐",
+      "Effective Decode Throughput Per User (tokens/sec/user)": "单用户有效解码吞吐",
+      "Effective Latency (CO-aware) (ms)": "有效延迟",
+      "Effective Prefill Concurrency (requests)": "有效预填充并发",
+      "Effective Prefill Throughput (tokens/sec)": "有效预填充吞吐",
+      "Effective Prefill Throughput Per User (tokens/sec/user)": "单用户有效预填充吞吐",
+      "Effective Total Throughput (tokens/sec)": "有效总吞吐",
+      "HTTP Blocked (ms)": "HTTP 阻塞耗时",
+      "HTTP Chunks Received": "HTTP 接收分块数",
+      "HTTP Chunks Sent": "HTTP 发送分块数",
+      "HTTP Connecting (ms)": "HTTP 连接耗时",
+      "HTTP Connection Overhead (ms)": "HTTP 连接开销",
+      "HTTP Connection Reused (ratio)": "HTTP 连接复用率",
+      "HTTP Data Received (KB)": "HTTP 接收数据量",
+      "HTTP Data Sent (KB)": "HTTP 发送数据量",
+      "HTTP DNS Lookup (ms)": "HTTP DNS 查询耗时",
+      "HTTP Duration (excl. conn) (ms)": "HTTP 请求耗时",
+      "HTTP Receiving (ms)": "HTTP 接收耗时",
+      "HTTP Sending (ms)": "HTTP 发送耗时",
+      "HTTP Total Time (ms)": "HTTP 总耗时",
+      "HTTP Waiting (TTFB) (ms)": "HTTP 首字节等待",
+      "Input Sequence Length (tokens)": "输入序列长度",
+      "Input Token Throughput (tokens/sec)": "输入 Token 吞吐",
+      "Inter Chunk Latency (ms)": "分块间延迟",
+      "Inter Token Latency (ms)": "Token 间延迟",
+      "OSL Mismatch Count": "输出长度不匹配次数",
+      "OSL Mismatch Diff % (%)": "输出长度差异比例",
+      "Output Sequence Length (tokens)": "输出序列长度",
+      "Output Token Throughput (tokens/sec)": "输出 Token 吞吐",
+      "Output Token Throughput Per User (tokens/sec/user)": "单用户输出 Token 吞吐",
+      "Prefill Throughput Per User (tokens/sec/user)": "单用户预填充吞吐",
+      "Reasoning Token Count (tokens)": "推理 Token 数",
+      "Request Count": "请求数",
+      "Request Count (requests)": "请求数",
+      "Request Latency (ms)": "请求延迟",
+      "Request Throughput (requests/sec)": "请求吞吐",
+      "Time to First Token (ms)": "首 Token 时间",
+      "Time to Second Token (ms)": "第二 Token 时间",
+      "Tokens In Flight (tokens)": "飞行中 Token 数",
+      "Total Input Sequence Length (tokens)": "总输入序列长度",
+      "Total Output Sequence Length (tokens)": "总输出序列长度",
+      "Total Reasoning Tokens (tokens)": "总推理 Token 数",
+      "Total Token Throughput (tokens/sec)": "总 Token 吞吐",
+      "Total Usage Completion Tokens (tokens)": "总用量完成 Token",
+      "Total Usage Prompt Tokens (tokens)": "总用量提示词 Token",
+      "Total Usage Reasoning Tokens (tokens)": "总用量推理 Token",
+      "Total Usage Total Tokens (tokens)": "总用量 Token",
+      "Usage Completion Diff % (%)": "用量完成 Token 差异比例",
+      "Usage Completion Tokens (tokens)": "用量完成 Token",
+      "Usage Discrepancy Count": "用量差异次数",
+      "Usage Prompt Diff % (%)": "用量提示词 Token 差异比例",
+      "Usage Prompt Tokens (tokens)": "用量提示词 Token",
+      "Usage Reasoning Diff % (%)": "用量推理 Token 差异比例",
+      "Usage Reasoning Tokens (tokens)": "用量推理 Token",
+      "Usage Total Tokens (tokens)": "用量总 Token"
+    };
+
+    const ZH_WARNING_HINTS = {
+      "Token Count Discrepancy Warning": "Token 计数差异告警",
+      "Output Sequence Length Mismatch Warning": "输出序列长度不匹配告警"
+    };
+
     function t(key, ...args) {
       const pack = I18N[currentLang] || I18N.zh;
       const value = pack[key] ?? I18N.en[key] ?? key;
@@ -1250,6 +1344,14 @@
     function setStatus(el, value) {
       el.dataset.statusValue = value || "";
       el.textContent = value ? statusText(value) : "-";
+    }
+
+    function updateRunStatusCard(status) {
+      const card = $("runStatusCard");
+      card.classList.remove("running", "succeeded", "failed");
+      if (status === "running") card.classList.add("running");
+      if (status === "succeeded") card.classList.add("succeeded");
+      if (status === "failed") card.classList.add("failed");
     }
 
     function setInfoKey(key, tone = "", ...args) {
@@ -1384,6 +1486,30 @@
       }[ch]));
     }
 
+    function zhAnnotated(value, hints) {
+      if (currentLang !== "zh") return value;
+      let hint = hints[value];
+      if (!hint) {
+        const normalize = text => text.replace(/\s*\([^)]*\)\s*$/g, "").trim();
+        const normalizedValue = normalize(value);
+        const match = Object.entries(hints).find(([key]) => normalize(key) === normalizedValue);
+        if (match) hint = match[1];
+      }
+      return hint ? `${value} ( ${hint} )` : value;
+    }
+
+    function sectionTitle(value) {
+      return zhAnnotated(value, ZH_SECTION_HINTS);
+    }
+
+    function metricTitle(value) {
+      return zhAnnotated(value, ZH_METRIC_HINTS);
+    }
+
+    function warningTitle(value) {
+      return zhAnnotated(value, ZH_WARNING_HINTS);
+    }
+
     function statValue(metric, stat) {
       const value = metric?.values?.[stat] ?? metric?.values?.avg;
       return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -1431,14 +1557,14 @@
           ), 1);
           const rowsHtml = metrics.map(metric => `
             <tr>
-              <td>${escapeHtml(metric.name)}</td>
+              <td>${escapeHtml(metricTitle(metric.name))}</td>
               ${statKeys.map(stat => `<td>${fmt(statValue(metric, stat))}</td>`).join("")}
               <td class="spark-cell">${renderDetailBars(metric, maxValue)}</td>
             </tr>
           `).join("");
           return `
             <div class="detail-section">
-              <h3>${escapeHtml(section.title)}</h3>
+              <h3>${escapeHtml(sectionTitle(section.title))}</h3>
               <div class="detail-table-wrap">
                 <table class="detail-table">
                   <thead>
@@ -1464,7 +1590,7 @@
           <div class="warning-section">
             <h3>${t("warnings")}</h3>
             ${warnings.map(warning => `
-              <h3>${escapeHtml(warning.title)}</h3>
+              <h3>${escapeHtml(warningTitle(warning.title))}</h3>
               <pre class="warning-text">${escapeHtml(warning.text)}</pre>
             `).join("")}
           </div>
@@ -1660,6 +1786,7 @@
       setStatus($("status"), data.status);
       $("runId").textContent = data.id || "-";
       setStatus($("runStatus"), data.status || "");
+      updateRunStatusCard(data.status || "");
       $("resultCount").textContent = (data.results || []).length;
       delete $("logs").dataset.logKey;
       $("logs").textContent = data.logs || JSON.stringify(data, null, 2);
@@ -1694,6 +1821,8 @@
       showStartBanner(true);
       setLogKey("starting");
       setStatus($("resultState"), "running");
+      setStatus($("runStatus"), "running");
+      updateRunStatusCard("running");
       latestRunData = null;
       $("resultEmpty").hidden = true;
       $("resultContent").hidden = true;
@@ -1707,6 +1836,9 @@
       $("runId").textContent = activeRun || "-";
       if (!res.ok) {
         $("logs").textContent = JSON.stringify(data, null, 2);
+        setStatus($("runStatus"), "failed");
+        updateRunStatusCard("failed");
+        setStatus($("resultState"), "failed");
         return;
       }
       clearInterval(poller);

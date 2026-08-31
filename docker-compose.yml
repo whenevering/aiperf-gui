@@ -9,6 +9,10 @@ services:
       - "8080:8080"
     volumes:
       - aiperf-results:/data/results
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
     restart: unless-stopped
 
 volumes:

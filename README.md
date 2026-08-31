@@ -73,7 +73,7 @@ curl http://127.0.0.1:8080/api/aiperf-info
 在离线机器导入并运行：
 
 ```bash
-./import-and-run.sh aiperf-0.12.0-gui1.tar
+./import-and-run.sh aiperf-gui-0.12.0-2026-08-31.tar
 ```
 
 ## 许可证

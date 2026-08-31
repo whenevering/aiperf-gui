@@ -12,9 +12,9 @@ aiperf-gui-offline-migration-2026-08-30/
 │   ├── aiperf-gui-source.zip
 │   └── aiperf-gui-local-repo.tar.gz
 ├── images/
-│   ├── aiperf-base-0.12.0.tar.gz
+│   ├── aiperf-base-0.12.0.tar
 │   ├── aiperf-base-0.12.0.sha256
-│   ├── aiperf-gui-0.12.0-2026-08-30.tar.gz
+│   ├── aiperf-gui-0.12.0-2026-08-30.tar
 │   └── aiperf-gui-0.12.0-2026-08-30.sha256
 ├── pipeline/
 │   ├── gitea-actions-docker-build.yml
