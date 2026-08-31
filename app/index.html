@@ -254,17 +254,18 @@
       color: #A9A9A9A9;
     }
     .status-card.running {
-      animation: statusPulse 4.8s steps(1, end) infinite;
+      animation: statusPulse 2.9s linear infinite;
     }
     .status-card.succeeded strong {
-      color: #166534;
+      color: #16a34a;
     }
     .status-card.failed strong {
-      color: #8b1a1a;
+      color: #dc2626;
     }
     @keyframes statusPulse {
-      0%, 39.583% { background: #fbfcfe; }
-      39.584%, 100% { background: #dcfce7; }
+      0%, 31.034% { background: #fbfcfe; }
+      37.931%, 93.103% { background: #dcfce7; }
+      100% { background: #fbfcfe; }
     }
     .bar {
       height: 7px;
