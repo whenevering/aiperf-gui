@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import csv
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -22,7 +24,7 @@ RUNS_LOCK = threading.Lock()
 
 
 def json_response(handler, status, payload):
-    body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    body = json.dumps(sanitize_for_json(payload), ensure_ascii=False, indent=2).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(body)))
@@ -46,6 +48,16 @@ def read_json(handler):
         return json.loads(raw.decode("utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid JSON: {exc}") from exc
+
+
+def sanitize_for_json(value):
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {key: sanitize_for_json(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [sanitize_for_json(item) for item in value]
+    return value
 
 
 def normalize_models_url(base_url):
@@ -176,6 +188,9 @@ def build_aiperf_command(config, artifact_dir):
 
 def proxy_env(config):
     env = os.environ.copy()
+    env.setdefault("LANG", "C.UTF-8")
+    env.setdefault("LC_ALL", "C.UTF-8")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
     proxy_enabled = bool(config.get("proxy_enabled"))
     proxy_url = str(config.get("proxy_url", "")).strip()
     no_proxy = str(config.get("no_proxy", "")).strip()
@@ -191,6 +206,80 @@ def proxy_env(config):
             env["NO_PROXY"] = no_proxy
             env["no_proxy"] = no_proxy
     return env
+
+
+def parse_float(value):
+    if value is None:
+        return None
+    text = str(value).strip().replace(",", "")
+    if not text or text.upper() == "N/A":
+        return None
+    try:
+        number = float(text)
+    except ValueError:
+        return None
+    return number if math.isfinite(number) else None
+
+
+CSV_METRIC_MAP = {
+    "Time to First Token (ms)": ("time_to_first_token", "ms"),
+    "Request Latency (ms)": ("request_latency", "ms"),
+    "Inter Token Latency (ms)": ("inter_token_latency", "ms"),
+    "Output Token Throughput (tokens/sec)": ("output_token_throughput", "tokens/sec"),
+    "Request Throughput (requests/sec)": ("request_throughput", "requests/sec"),
+    "Output Sequence Length (tokens)": ("output_sequence_length", "tokens"),
+    "Input Sequence Length (tokens)": ("input_sequence_length", "tokens"),
+}
+
+
+def parse_aiperf_csv(path):
+    metrics = {}
+    if not path.exists():
+        return metrics
+
+    headers = []
+    with path.open(newline="", encoding="utf-8", errors="replace") as handle:
+        for row in csv.reader(handle):
+            if not row:
+                continue
+            if row[0] == "Metric":
+                headers = row
+                continue
+            if not headers:
+                continue
+
+            mapped = CSV_METRIC_MAP.get(row[0])
+            if not mapped:
+                continue
+            key, unit = mapped
+            values = {"unit": unit}
+            for index, header in enumerate(headers[1:], start=1):
+                if index >= len(row):
+                    continue
+                stat = "avg" if header == "Value" else header
+                number = parse_float(row[index])
+                if number is not None:
+                    values[stat] = number
+            if values.keys() != {"unit"}:
+                metrics[key] = values
+    return metrics
+
+
+def load_aiperf_export(artifact_dir):
+    export = {}
+    json_file = artifact_dir / "profile_export_aiperf.json"
+    csv_file = artifact_dir / "profile_export_aiperf.csv"
+
+    if json_file.exists():
+        try:
+            export = json.loads(json_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            export = {"parse_warning": f"failed to parse {json_file.name}: {exc}"}
+
+    for key, value in parse_aiperf_csv(csv_file).items():
+        if not isinstance(export.get(key), dict) or not export[key]:
+            export[key] = value
+    return sanitize_for_json(export)
 
 
 def redact_command(command):
@@ -237,21 +326,29 @@ def run_benchmark(run_id, configs):
             if not shutil.which("aiperf"):
                 raise RuntimeError("aiperf executable is not available in this container")
 
-            process = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=proxy_env(config))
+            process = subprocess.Popen(
+                command,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                env=proxy_env(config),
+            )
             assert process.stdout is not None
             for line in process.stdout:
                 logs.append(line.rstrip())
                 with RUNS_LOCK:
                     RUNS[run_id]["logs"] = "\n".join(logs[-1000:])
             code = process.wait()
+            parsed = load_aiperf_export(artifact_dir)
+            if parsed:
+                results.append({"concurrency": config.get("concurrency"), "artifact_dir": str(artifact_dir), "export": parsed})
+                with RUNS_LOCK:
+                    RUNS[run_id]["results"] = results
+
             if code != 0:
                 raise RuntimeError(f"aiperf exited with code {code}")
-
-            export_file = artifact_dir / "profile_export_aiperf.json"
-            parsed = {}
-            if export_file.exists():
-                parsed = json.loads(export_file.read_text(encoding="utf-8"))
-            results.append({"concurrency": config.get("concurrency"), "artifact_dir": str(artifact_dir), "export": parsed})
 
         with RUNS_LOCK:
             RUNS[run_id].update({"status": "succeeded", "results": results, "logs": "\n".join(logs[-1000:]), "finished_at": time.time()})

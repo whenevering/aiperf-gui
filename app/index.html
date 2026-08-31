@@ -399,8 +399,12 @@
       min-height: 0;
       max-height: none;
       overflow: visible;
-      white-space: pre-wrap;
-      word-break: break-word;
+      white-space: pre;
+      word-break: normal;
+      overflow-wrap: normal;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.35;
     }
     @media (max-width: 1180px) {
       .row-connection { grid-template-columns: 1.4fr 1fr; }
@@ -610,6 +614,7 @@
         noProxy: "不走代理",
         result: "结果",
         noResult: "暂无结果",
+        noResultReason: message => `暂无可展示结果：${message}`,
         latencyByConcurrency: "延迟 / 并发",
         throughputByConcurrency: "吞吐 / 并发",
         runStatusTitle: "运行状态",
@@ -674,6 +679,7 @@
         noProxy: "No Proxy",
         result: "Result",
         noResult: "No result",
+        noResultReason: message => `No displayable result: ${message}`,
         latencyByConcurrency: "Latency by Concurrency",
         throughputByConcurrency: "Throughput by Concurrency",
         runStatusTitle: "Run Status",
@@ -738,6 +744,7 @@
         noProxy: "Sans proxy",
         result: "Resultat",
         noResult: "Aucun resultat",
+        noResultReason: message => `Aucun resultat exploitable : ${message}`,
         latencyByConcurrency: "Latence par concurrence",
         throughputByConcurrency: "Debit par concurrence",
         runStatusTitle: "Etat d'execution",
@@ -802,6 +809,7 @@
         noProxy: "Ohne Proxy",
         result: "Ergebnis",
         noResult: "Kein Ergebnis",
+        noResultReason: message => `Kein anzeigbares Ergebnis: ${message}`,
         latencyByConcurrency: "Latenz nach Parallelitaet",
         throughputByConcurrency: "Durchsatz nach Parallelitaet",
         runStatusTitle: "Laufstatus",
@@ -866,6 +874,7 @@
         noProxy: "Sin proxy",
         result: "Resultado",
         noResult: "Sin resultado",
+        noResultReason: message => `Sin resultado visible: ${message}`,
         latencyByConcurrency: "Latencia por concurrencia",
         throughputByConcurrency: "Rendimiento por concurrencia",
         runStatusTitle: "Estado de ejecucion",
@@ -1144,7 +1153,8 @@
     }
 
     function metricValue(exportData, key, stat = "avg") {
-      const value = exportData?.[key]?.[stat] ?? exportData?.[key]?.avg;
+      const metric = exportData?.[key];
+      const value = typeof metric === "number" ? metric : metric?.[stat] ?? metric?.avg;
       return typeof value === "number" && Number.isFinite(value) ? value : null;
     }
 
@@ -1155,8 +1165,22 @@
     }
 
     function latestResult(run) {
-      const rows = (run.results || []).filter(r => r.export && Object.keys(r.export).length);
+      const rows = displayableResultRows(run);
       return rows.length ? rows[rows.length - 1] : null;
+    }
+
+    function displayableResultRows(run) {
+      const metricKeys = [
+        ["time_to_first_token", "p50"],
+        ["request_latency", "p99"],
+        ["inter_token_latency", "p50"],
+        ["output_token_throughput", "avg"],
+        ["request_throughput", "avg"],
+        ["output_sequence_length", "avg"]
+      ];
+      return (run.results || []).filter(row =>
+        row.export && metricKeys.some(([key, stat]) => metricValue(row.export, key, stat) !== null)
+      );
     }
 
     function buildMetric(label, value, unit, percent) {
@@ -1166,8 +1190,9 @@
 
     function renderResults(run) {
       setStatus($("resultState"), run.status || "idle");
-      const rows = (run.results || []).filter(r => r.export && Object.keys(r.export).length);
+      const rows = displayableResultRows(run);
       if (!rows.length) {
+        $("resultEmpty").textContent = run.status === "failed" && run.error ? t("noResultReason", run.error) : t("noResult");
         $("resultEmpty").hidden = false;
         $("resultContent").hidden = true;
         return;
@@ -1275,13 +1300,20 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "fetch failed");
-        for (const model of data.models || []) {
-          list.insertAdjacentHTML("beforeend", `<option value="${model}"></option>`);
+        const models = data.models || [];
+        for (const model of models) {
+          const option = document.createElement("option");
+          option.value = model;
+          list.appendChild(option);
         }
-        if ((data.models || []).length) {
-          renderModelMenu(data.models);
+        if (models.length) {
+          const currentModel = $("model").value.trim();
+          if (!currentModel || !models.includes(currentModel)) {
+            $("model").value = models[0];
+          }
+          renderModelMenu(models);
           selectBtn.disabled = false;
-          setInfoKey("modelsLoaded", "ok", data.models.length);
+          setInfoKey("modelsLoaded", "ok", models.length);
         } else {
           selectBtn.disabled = true;
           setInfoKey("noModels", "error");
