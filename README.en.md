@@ -15,8 +15,26 @@ AIPerf GUI is a Docker-packaged Web console for NVIDIA AIPerf 0.12.0. It helps b
 - Concurrency sweeps such as `1,2,4,8,16`
 - Configurable input tokens, output tokens, requests, warmup, and timeout
 - Streaming, fixed output, server metrics, proxy, and no-proxy controls
-- Result cards and charts for TTFT, request latency, ITL, output TPS, RPS, and output length
+- Charts are shown before the per-concurrency result blocks
+- Each concurrency level is rendered as its own result block with TTFT, request P99, ITL, output TPS, RPS, and output length
+- Detailed AIPerf metric tables and warning sections are collapsed by default
+- Running status uses a fading background pulse; succeeded and failed states use brighter status colors
 - Separate multilingual help page
+
+## Release Image
+
+GitHub Releases provide a compressed Docker image:
+
+```text
+aiperf-gui-0.1.0-yyyy-mm-dd.tar.gz
+```
+
+Load and run it with:
+
+```bash
+docker load -i aiperf-gui-0.1.0-2026-08-31.tar.gz
+docker run --rm -p 8080:8080 aiperf-gui:0.1.0
+```
 
 ## Quick Start
 

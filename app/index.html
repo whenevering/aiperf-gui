@@ -234,8 +234,32 @@
     }
     .result-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+    .result-run {
+      display: grid;
       gap: 10px;
+      min-width: 0;
+    }
+    .result-run-grid {
+      display: grid;
+      grid-template-columns: minmax(78px, 0.45fr) repeat(6, minmax(130px, 1fr));
+      gap: 10px;
+      min-width: 0;
+    }
+    .concurrency-badge {
+      display: grid;
+      place-items: center;
+      min-height: 88px;
+      border-radius: 8px;
+      background: #16a34a;
+      color: #fff;
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.15;
+      text-align: center;
+      padding: 8px;
       min-width: 0;
     }
     .metric {
@@ -249,12 +273,33 @@
     .metric b { display: block; font-size: 12px; color: #607089; }
     .metric strong { display: block; margin-top: 5px; font-size: 22px; line-height: 1.15; color: #172033; }
     .metric small { display: block; margin-top: 2px; color: #6b778c; }
+    .metric-value-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 5px;
+      min-width: 0;
+    }
+    .metric-value-row strong {
+      margin-top: 0;
+      min-width: 0;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+    .metric-value-row small {
+      margin-top: 0;
+      flex: 0 0 auto;
+      text-align: right;
+      white-space: nowrap;
+    }
     .title-build {
       color: #a9a9a9;
       color: #A9A9A9A9;
     }
     .status-card.running {
-      animation: statusPulse 2.9s linear infinite;
+      animation: statusPulse 2.9s ease-in-out infinite;
+      will-change: background-color;
     }
     .status-card.succeeded strong {
       color: #16a34a;
@@ -263,9 +308,9 @@
       color: #dc2626;
     }
     @keyframes statusPulse {
-      0%, 31.034% { background: #fbfcfe; }
-      37.931%, 93.103% { background: #dcfce7; }
-      100% { background: #fbfcfe; }
+      0%, 31.034% { background-color: #fbfcfe; }
+      37.931%, 93.103% { background-color: #dcfce7; }
+      100% { background-color: #fbfcfe; }
     }
     .bar {
       height: 7px;
@@ -286,6 +331,9 @@
       gap: 10px;
       margin-top: 10px;
       min-width: 0;
+    }
+    .charts + .result-grid {
+      margin-top: 12px;
     }
     .chart {
       border: 1px solid #dfe3ea;
@@ -335,8 +383,10 @@
     .detail-stack {
       display: grid;
       gap: 12px;
-      margin-top: 12px;
       min-width: 0;
+    }
+    #resultDetails {
+      margin-top: 12px;
     }
     .detail-section,
     .warning-section {
@@ -348,12 +398,50 @@
     }
     .detail-section h3,
     .warning-section h3 {
-      margin: 0 0 8px;
+      margin: 0;
       color: #172033;
       font-size: 14px;
       line-height: 1.3;
     }
+    .detail-section summary,
+    .warning-section summary {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      list-style: none;
+      min-height: 24px;
+    }
+    .detail-section summary h3,
+    .warning-section summary h3 {
+      font: caption;
+      margin: 0;
+      color: #172033;
+    }
+    .warning-section > h3 {
+      margin: 8px 0;
+    }
+    .detail-section summary::-webkit-details-marker,
+    .warning-section summary::-webkit-details-marker {
+      display: none;
+    }
+    .detail-section summary::before,
+    .warning-section summary::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #405066;
+      border-bottom: 2px solid #405066;
+      transform: rotate(45deg);
+      transition: transform 0.18s ease;
+      flex: 0 0 auto;
+    }
+    .detail-section[open] summary::before,
+    .warning-section[open] summary::before {
+      transform: rotate(-135deg);
+    }
     .detail-table-wrap {
+      margin-top: 8px;
       max-width: 100%;
       min-width: 0;
       overflow-x: auto;
@@ -558,12 +646,13 @@
       .row-connection { grid-template-columns: 1.4fr 1fr; }
       .row-params { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .row-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .result-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .result-run-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .model-field { grid-column: span 4; }
     }
     @media (max-width: 760px) {
       main { padding: 10px; }
-      .benchmark-row, .result-grid, .charts, .status-grid { grid-template-columns: 1fr; }
+      .benchmark-row, .result-run-grid, .charts, .status-grid { grid-template-columns: 1fr; }
+      .concurrency-badge { min-height: 54px; }
       .model-field { grid-column: span 1; }
       .model-tools { grid-template-columns: 1fr; }
       .model-picker { width: 100%; }
@@ -686,7 +775,6 @@
       <h2><span data-i18n="result">结果</span> <span class="status" id="resultState" data-status-value="idle">待命</span></h2>
       <div id="resultEmpty" class="empty" data-i18n="noResult" hidden>暂无结果</div>
       <div id="resultContent" hidden>
-        <div class="result-grid" id="resultMetrics"></div>
         <div class="charts">
           <div class="chart">
             <div class="chart-title">
@@ -703,6 +791,7 @@
             <svg id="throughputChart" viewBox="0 0 620 180" role="img"></svg>
           </div>
         </div>
+        <div class="result-grid" id="resultMetrics"></div>
         <div id="resultDetails" class="detail-stack"></div>
       </div>
     </section>
@@ -816,6 +905,7 @@
         metricRps: "RPS",
         metricOutputLen: "输出长度",
         unitConcurrency: c => `并发=${c}`,
+        concurrencyBadge: c => `${c}并发`,
         unitTokensSec: "tokens/sec",
         unitRequestsSec: "requests/sec",
         unitTokens: "tokens",
@@ -894,6 +984,7 @@
         metricRps: "RPS",
         metricOutputLen: "Output Len",
         unitConcurrency: c => `c=${c}`,
+        concurrencyBadge: c => `${c} concurrency`,
         unitTokensSec: "tokens/sec",
         unitRequestsSec: "requests/sec",
         unitTokens: "tokens",
@@ -972,6 +1063,7 @@
         metricRps: "RPS",
         metricOutputLen: "Longueur sortie",
         unitConcurrency: c => `c=${c}`,
+        concurrencyBadge: c => `${c} concurrence`,
         unitTokensSec: "tokens/s",
         unitRequestsSec: "requetes/s",
         unitTokens: "tokens",
@@ -1050,6 +1142,7 @@
         metricRps: "RPS",
         metricOutputLen: "Ausgabelaenge",
         unitConcurrency: c => `c=${c}`,
+        concurrencyBadge: c => `${c} parallel`,
         unitTokensSec: "tokens/s",
         unitRequestsSec: "anfragen/s",
         unitTokens: "tokens",
@@ -1128,6 +1221,7 @@
         metricRps: "RPS",
         metricOutputLen: "Longitud salida",
         unitConcurrency: c => `c=${c}`,
+        concurrencyBadge: c => `${c} concurrencia`,
         unitTokensSec: "tokens/s",
         unitRequestsSec: "solicitudes/s",
         unitTokens: "tokens",
@@ -1495,7 +1589,7 @@
       if (currentLang !== "zh") return value;
       let hint = hints[value];
       if (!hint) {
-        const normalize = text => text.replace(/\s*\([^)]*\)\s*$/g, "").trim();
+        const normalize = text => stripAiperfPrefix(text).replace(/\s*\([^)]*\)\s*$/g, "").trim();
         const normalizedValue = normalize(value);
         const match = Object.entries(hints).find(([key]) => normalize(key) === normalizedValue);
         if (match) hint = match[1];
@@ -1503,8 +1597,12 @@
       return hint ? `${value} ( ${hint} )` : value;
     }
 
+    function stripAiperfPrefix(value) {
+      return String(value || "").replace(/^NVIDIA AIPerf\s*\|\s*/i, "");
+    }
+
     function sectionTitle(value) {
-      return zhAnnotated(value, ZH_SECTION_HINTS);
+      return zhAnnotated(stripAiperfPrefix(value), ZH_SECTION_HINTS);
     }
 
     function metricTitle(value) {
@@ -1543,13 +1641,11 @@
       }).join("")}</div>`;
     }
 
-    function renderResultDetails(row) {
-      const target = $("resultDetails");
+    function resultDetailsHtml(row) {
       const sections = row.export?._sections || [];
       const warnings = row.export?._warnings || [];
       if (!sections.length && !warnings.length) {
-        target.innerHTML = "";
-        return;
+        return "";
       }
 
       const statKeys = ["avg", "p50", "p90", "p99", "max"];
@@ -1568,8 +1664,8 @@
             </tr>
           `).join("");
           return `
-            <div class="detail-section">
-              <h3>${escapeHtml(sectionTitle(section.title))}</h3>
+            <details class="detail-section">
+              <summary><h3>${escapeHtml(sectionTitle(section.title))}</h3></summary>
               <div class="detail-table-wrap">
                 <table class="detail-table">
                   <thead>
@@ -1586,22 +1682,26 @@
                   <tbody>${rowsHtml}</tbody>
                 </table>
               </div>
-            </div>
+            </details>
           `;
         }));
       }
       if (warnings.length) {
         html.push(`
-          <div class="warning-section">
-            <h3>${t("warnings")}</h3>
+          <details class="warning-section">
+            <summary><h3>${t("warnings")}</h3></summary>
             ${warnings.map(warning => `
               <h3>${escapeHtml(warningTitle(warning.title))}</h3>
               <pre class="warning-text">${escapeHtml(warning.text)}</pre>
             `).join("")}
-          </div>
+          </details>
         `);
       }
-      target.innerHTML = html.join("");
+      return html.join("");
+    }
+
+    function renderResultDetails(row) {
+      $("resultDetails").innerHTML = resultDetailsHtml(row);
     }
 
     function latestResult(run) {
@@ -1623,9 +1723,39 @@
       );
     }
 
-    function buildMetric(label, value, unit, percent) {
+    function buildMetric(label, value, unit, percent, options = {}) {
       const width = Math.max(0, Math.min(100, percent || 0));
-      return `<div class="metric"><b>${label}</b><strong>${value}</strong><small>${unit}</small><div class="bar" style="--w:${width}%"><span></span></div></div>`;
+      const valueHtml = options.inlineUnit
+        ? `<div class="metric-value-row"><strong>${value}</strong>${unit ? `<small>${unit}</small>` : ""}</div>`
+        : `<strong>${value}</strong>${unit ? `<small>${unit}</small>` : ""}`;
+      return `<div class="metric"><b>${label}</b>${valueHtml}<div class="bar" style="--w:${width}%"><span></span></div></div>`;
+    }
+
+    function renderResultGroup(row) {
+      const e = row.export;
+      const ttft = metricValue(e, "time_to_first_token", "p50");
+      const latency = metricValue(e, "request_latency", "p99");
+      const itl = metricValue(e, "inter_token_latency", "p50");
+      const outputTps = metricValue(e, "output_token_throughput");
+      const rps = metricValue(e, "request_throughput");
+      const osl = metricValue(e, "output_sequence_length");
+      const maxBase = Math.max(ttft || 0, latency || 0, itl || 0, outputTps || 0, rps || 0, osl || 0, 1);
+      const details = resultDetailsHtml(row);
+
+      return `
+        <div class="result-run">
+          <div class="result-run-grid">
+            <div class="concurrency-badge">${escapeHtml(t("concurrencyBadge", row.concurrency))}</div>
+            ${buildMetric(t("metricTtft"), `${fmt(ttft)} ms`, "", (ttft || 0) / maxBase * 100)}
+            ${buildMetric(t("metricRequestP99"), `${fmt(latency)} ms`, "", (latency || 0) / maxBase * 100)}
+            ${buildMetric(t("metricItl"), `${fmt(itl)} ms`, "", (itl || 0) / maxBase * 100)}
+            ${buildMetric(t("metricOutputTps"), fmt(outputTps), t("unitTokensSec"), (outputTps || 0) / maxBase * 100, {inlineUnit: true})}
+            ${buildMetric(t("metricRps"), fmt(rps, 3), t("unitRequestsSec"), (rps || 0) / maxBase * 100, {inlineUnit: true})}
+            ${buildMetric(t("metricOutputLen"), fmt(osl), t("unitTokens"), (osl || 0) / maxBase * 100, {inlineUnit: true})}
+          </div>
+          ${details ? `<div class="detail-stack">${details}</div>` : ""}
+        </div>
+      `;
     }
 
     function renderResults(run) {
@@ -1636,29 +1766,15 @@
         $("latencyLegend").innerHTML = "";
         $("throughputLegend").innerHTML = "";
         $("resultDetails").innerHTML = "";
+        $("resultDetails").hidden = true;
         $("resultEmpty").hidden = !["succeeded", "failed"].includes(run.status);
         $("resultContent").hidden = true;
         return;
       }
 
-      const last = latestResult(run);
-      const e = last.export;
-      const ttft = metricValue(e, "time_to_first_token", "p50");
-      const latency = metricValue(e, "request_latency", "p99");
-      const itl = metricValue(e, "inter_token_latency", "p50");
-      const outputTps = metricValue(e, "output_token_throughput");
-      const rps = metricValue(e, "request_throughput");
-      const osl = metricValue(e, "output_sequence_length");
-      const maxBase = Math.max(ttft || 0, latency || 0, itl || 0, outputTps || 0, rps || 0, osl || 0, 1);
-
-      $("resultMetrics").innerHTML = [
-        buildMetric(t("metricTtft"), `${fmt(ttft)} ms`, t("unitConcurrency", last.concurrency), (ttft || 0) / maxBase * 100),
-        buildMetric(t("metricRequestP99"), `${fmt(latency)} ms`, t("unitConcurrency", last.concurrency), (latency || 0) / maxBase * 100),
-        buildMetric(t("metricItl"), `${fmt(itl)} ms`, t("unitConcurrency", last.concurrency), (itl || 0) / maxBase * 100),
-        buildMetric(t("metricOutputTps"), fmt(outputTps), t("unitTokensSec"), (outputTps || 0) / maxBase * 100),
-        buildMetric(t("metricRps"), fmt(rps, 3), t("unitRequestsSec"), (rps || 0) / maxBase * 100),
-        buildMetric(t("metricOutputLen"), fmt(osl), t("unitTokens"), (osl || 0) / maxBase * 100)
-      ].join("");
+      $("resultMetrics").innerHTML = rows.map(renderResultGroup).join("");
+      $("resultDetails").innerHTML = "";
+      $("resultDetails").hidden = true;
 
       $("resultEmpty").hidden = true;
       $("resultContent").hidden = false;
@@ -1678,7 +1794,6 @@
         {key: "output_token_throughput", stat: "avg", cls: "line-blue", point: "point-blue"},
         {key: "request_throughput", stat: "avg", cls: "line-green", point: "point-green"}
       ], "");
-      renderResultDetails(last);
     }
 
     function drawLineChart(id, rows, series, unit) {

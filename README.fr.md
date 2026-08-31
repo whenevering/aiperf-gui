@@ -15,8 +15,26 @@ AIPerf GUI est une console Web Dockerisee pour NVIDIA AIPerf 0.12.0. Elle permet
 - Sweeps de concurrence comme `1,2,4,8,16`
 - Reglages pour tokens d'entree, tokens de sortie, requetes, prechauffe et delai
 - Options streaming, sortie fixe, metriques serveur, proxy et sans proxy
-- Cartes et graphiques pour TTFT, latence, ITL, TPS sortie, RPS et longueur de sortie
+- Les graphiques sont affiches avant les blocs de resultat par concurrence
+- Chaque niveau de concurrence a son propre bloc avec TTFT, P99 requete, ITL, TPS sortie, RPS et longueur de sortie
+- Les tableaux de metriques AIPerf et les avertissements sont replies par defaut
+- L'etat en cours utilise un fondu de couleur; les etats reussi et echec utilisent des couleurs plus visibles
 - Page d'aide multilingue separee
+
+## Image Release
+
+Les Releases GitHub fournissent une image Docker compressee :
+
+```text
+aiperf-gui-0.1.0-yyyy-mm-dd.tar.gz
+```
+
+Chargement et execution :
+
+```bash
+docker load -i aiperf-gui-0.1.0-2026-08-31.tar.gz
+docker run --rm -p 8080:8080 aiperf-gui:0.1.0
+```
 
 ## Demarrage Rapide
 

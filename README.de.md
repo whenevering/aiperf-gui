@@ -15,8 +15,26 @@ AIPerf GUI ist eine Dockerisierte Web-Konsole fuer NVIDIA AIPerf 0.12.0. Sie hil
 - Parallelitaets-Sweeps wie `1,2,4,8,16`
 - Einstellbare Eingabe-Tokens, Ausgabe-Tokens, Anfragen, Warmup und Timeout
 - Streaming, feste Ausgabe, Servermetriken, Proxy und No-Proxy
-- Ergebnis-Karten und Diagramme fuer TTFT, Latenz, ITL, Ausgabe-TPS, RPS und Ausgabe-Laenge
+- Diagramme werden vor den Ergebnisbloecken je Parallelitaet angezeigt
+- Jede Parallelitaetsstufe erhaelt einen eigenen Ergebnisblock mit TTFT, Request P99, ITL, Ausgabe-TPS, RPS und Ausgabe-Laenge
+- AIPerf-Detailtabellen und Warnungen sind standardmaessig eingeklappt
+- Der laufende Status nutzt eine weiche Hintergrundanimation; erfolgreich und fehlgeschlagen nutzen hellere Statusfarben
 - Separate mehrsprachige Hilfeseite
+
+## Release-Image
+
+GitHub Releases enthalten ein komprimiertes Docker-Image:
+
+```text
+aiperf-gui-0.1.0-yyyy-mm-dd.tar.gz
+```
+
+Laden und starten:
+
+```bash
+docker load -i aiperf-gui-0.1.0-2026-08-31.tar.gz
+docker run --rm -p 8080:8080 aiperf-gui:0.1.0
+```
 
 ## Schnellstart
 
