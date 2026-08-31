@@ -249,8 +249,12 @@
     .metric b { display: block; font-size: 12px; color: #607089; }
     .metric strong { display: block; margin-top: 5px; font-size: 22px; line-height: 1.15; color: #172033; }
     .metric small { display: block; margin-top: 2px; color: #6b778c; }
+    .title-build {
+      color: #a9a9a9;
+      color: #A9A9A9A9;
+    }
     .status-card.running {
-      animation: statusPulse 1.5s ease-in-out infinite;
+      animation: statusPulse 4.8s steps(1, end) infinite;
     }
     .status-card.succeeded strong {
       color: #166534;
@@ -259,8 +263,8 @@
       color: #8b1a1a;
     }
     @keyframes statusPulse {
-      0%, 100% { background: #fbfcfe; }
-      50% { background: #dcfce7; }
+      0%, 39.583% { background: #fbfcfe; }
+      39.584%, 100% { background: #dcfce7; }
     }
     .bar {
       height: 7px;
@@ -569,7 +573,7 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1 id="appTitle">AIPerf GUI v0.1.0 Build 2026-08-31</h1>
+      <h1 id="appTitle">AIPerf GUI v0.1.0 <span class="title-build">build 2026-08-31</span></h1>
       <div class="language-switch">
         <label for="languageSelect" data-i18n="language">语言</label>
         <select id="languageSelect">
@@ -1330,8 +1334,8 @@
     }
 
     function updateTitle() {
-      const title = `AIPerf GUI v${guiVersion} Build ${buildDate}`;
-      $("appTitle").textContent = title;
+      const title = `AIPerf GUI v${guiVersion} build ${buildDate}`;
+      $("appTitle").innerHTML = `AIPerf GUI v${guiVersion} <span class="title-build">build ${buildDate}</span>`;
       document.title = title;
       $("bannerTitle").textContent = `AIPerf GUI ${guiVersion}`;
       $("footerAiperfVersion").textContent = `Based on AIPerf v${aiperfVersion}`;
