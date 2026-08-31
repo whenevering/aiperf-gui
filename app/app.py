@@ -3,6 +3,7 @@ import csv
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -232,10 +233,33 @@ CSV_METRIC_MAP = {
 }
 
 
+def metric_group(name):
+    if name.startswith("Effective ") or name.startswith("Tokens In Flight"):
+        return "NVIDIA AIPerf | LLM Metrics: Effective"
+    if name.startswith("Active "):
+        return "NVIDIA AIPerf | LLM Metrics: Active"
+    if name.startswith("Usage ") or name.startswith("Total Usage "):
+        return "NVIDIA AIPerf | LLM Metrics: Usage"
+    return "NVIDIA AIPerf | LLM Metrics"
+
+
+def metric_unit(name):
+    match = re.search(r"\(([^()]*)\)\s*$", name)
+    return match.group(1) if match else ""
+
+
 def parse_aiperf_csv(path):
     metrics = {}
+    sections = []
+    section_map = {}
+    section_order = {
+        "NVIDIA AIPerf | LLM Metrics: Effective": 0,
+        "NVIDIA AIPerf | LLM Metrics: Active": 1,
+        "NVIDIA AIPerf | LLM Metrics: Usage": 2,
+        "NVIDIA AIPerf | LLM Metrics": 3,
+    }
     if not path.exists():
-        return metrics
+        return metrics, sections
 
     headers = []
     with path.open(newline="", encoding="utf-8", errors="replace") as handle:
@@ -248,11 +272,8 @@ def parse_aiperf_csv(path):
             if not headers:
                 continue
 
-            mapped = CSV_METRIC_MAP.get(row[0])
-            if not mapped:
-                continue
-            key, unit = mapped
-            values = {"unit": unit}
+            name = row[0]
+            values = {"unit": metric_unit(name)}
             for index, header in enumerate(headers[1:], start=1):
                 if index >= len(row):
                     continue
@@ -261,14 +282,51 @@ def parse_aiperf_csv(path):
                 if number is not None:
                     values[stat] = number
             if values.keys() != {"unit"}:
-                metrics[key] = values
-    return metrics
+                mapped = CSV_METRIC_MAP.get(name)
+                if mapped:
+                    key, unit = mapped
+                    metrics[key] = {"unit": unit, **{k: v for k, v in values.items() if k != "unit"}}
+
+                group = metric_group(name)
+                if group not in section_map:
+                    section_map[group] = {"title": group, "metrics": []}
+                    sections.append(section_map[group])
+                section_map[group]["metrics"].append({"name": name, "values": values})
+    sections.sort(key=lambda section: section_order.get(section["title"], 99))
+    return metrics, sections
+
+
+def parse_console_warnings(path):
+    if not path.exists():
+        return []
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    warnings = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if "Warning" not in line or not line.lstrip().startswith(("╭", "┌")):
+            index += 1
+            continue
+
+        block = [line]
+        index += 1
+        while index < len(lines):
+            block.append(lines[index])
+            if lines[index].lstrip().startswith(("╰", "└")):
+                break
+            index += 1
+
+        title = re.sub(r"[╭─╮┌┐└┘╰│╯]+", " ", block[0]).strip()
+        warnings.append({"title": title or "AIPerf Warning", "text": "\n".join(block)})
+        index += 1
+    return warnings
 
 
 def load_aiperf_export(artifact_dir):
     export = {}
     json_file = artifact_dir / "profile_export_aiperf.json"
     csv_file = artifact_dir / "profile_export_aiperf.csv"
+    console_file = artifact_dir / "profile_export_console.txt"
 
     if json_file.exists():
         try:
@@ -276,9 +334,15 @@ def load_aiperf_export(artifact_dir):
         except Exception as exc:
             export = {"parse_warning": f"failed to parse {json_file.name}: {exc}"}
 
-    for key, value in parse_aiperf_csv(csv_file).items():
+    csv_metrics, sections = parse_aiperf_csv(csv_file)
+    for key, value in csv_metrics.items():
         if not isinstance(export.get(key), dict) or not export[key]:
             export[key] = value
+    if sections:
+        export["_sections"] = sections
+    warnings = parse_console_warnings(console_file)
+    if warnings:
+        export["_warnings"] = warnings
     return sanitize_for_json(export)
 
 
